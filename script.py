@@ -32,12 +32,12 @@ def parse_text_lz(x: str) -> str:
     return result.stdout.strip()
 
 if __name__ == "__main__":
-    with open("./basic-topology/basic.lean", "r", encoding="utf-8") as f:
+    with open("./basic_topology/basic.lean", "r", encoding="utf-8") as f:
         basic_lines = f.readlines()
     
     exercises_lines = strip_proofs(basic_lines)
     
-    with open("./basic-topology/exercise.lean", "w", encoding="utf-8") as f:
+    with open("./basic_topology/exercise.lean", "w", encoding="utf-8") as f:
         f.writelines(exercises_lines)
 
     basic = "".join(basic_lines)
@@ -49,13 +49,11 @@ if __name__ == "__main__":
     readme = f"""
 Some basic point-set topology in Lean for fun.
 
-The main file is [basic.lean](./basic-topology/basic.lean) and there is also an automatically generated file called [`exercise.lean`](./basic-topology/exercise.lean) with proofs of theorems removed if you want to try yourself :)
+The main file is [basic.lean](./basic_topology/basic.lean) and there is also an automatically generated file called [`exercise.lean`](./basic_topology/exercise.lean) with proofs of theorems removed if you want to try yourself :)
 
 I also copied the code into clickable links to the Lean 4 Web server. Love that place
 - [Link to main file](https://live.lean-lang.org/#codez={basic_parsed}) (slow)
 - [Link to exercises](https://live.lean-lang.org/#codez={exercises_parsed})
-
-
     """
     readme = readme.strip()
     with open("./README.md", "w") as f:
