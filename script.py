@@ -19,14 +19,17 @@ def strip_proofs(lines: list) -> list:
         i += 1
     return new_lines
 
-def parse_text(x: str) -> str:
-    import urllib.parse
-    return urllib.parse.quote(x, safe="")
-
 def parse_text_lz(x: str) -> str:
-    from lzstring import LZString
-    lz = LZString()
-    return lz.compressToEncodedURIComponent(x)
+    import subprocess
+    # python lzstring has some bugs lol
+    result = subprocess.run(
+        ["node", "compress.js"],
+        input=x,
+        capture_output=True,
+        check=True,
+        encoding="utf-8"
+    )
+    return result.stdout.strip()
 
 if __name__ == "__main__":
     with open("./BasicTopology/Basic.lean", "r", encoding="utf-8") as f:
