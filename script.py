@@ -23,6 +23,11 @@ def parse_text(x: str) -> str:
     import urllib.parse
     return urllib.parse.quote(x, safe="")
 
+def parse_text_lz(x: str) -> str:
+    from lzstring import LZString
+    lz = LZString()
+    return lz.compressToEncodedURIComponent(x)
+
 if __name__ == "__main__":
     with open("./BasicTopology/Basic.lean", "r", encoding="utf-8") as f:
         basic_lines = f.readlines()
@@ -35,8 +40,8 @@ if __name__ == "__main__":
     basic = "".join(basic_lines)
     exercises = "".join(exercises_lines)
 
-    basic_parsed = parse_text(basic)
-    exercises_parsed = parse_text(exercises)
+    basic_parsed = parse_text_lz(basic)
+    exercises_parsed = parse_text_lz(exercises)
 
     readme = f"""
 Some basic point-set topology in Lean for fun.
@@ -44,8 +49,8 @@ Some basic point-set topology in Lean for fun.
 There is an automatically generated file called `Exercises.lean` with proofs of theorems removed if you want to try yourself :)
 
 I also copied the code into clickable links to the Lean 4 Web server. Love that place
-- [Link to main file](https://live.lean-lang.org/#code={basic_parsed}) (slow)
-- [Linked to exercises](https://live.lean-lang.org/#code={exercises_parsed})
+- [Link to main file](https://live.lean-lang.org/#codez={basic_parsed}) (slow)
+- [Linked to exercises](https://live.lean-lang.org/#codez={exercises_parsed})
     """
     readme = readme.strip()
     with open("./README.md", "w") as f:
