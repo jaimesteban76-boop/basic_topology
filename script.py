@@ -55,7 +55,7 @@ I also copied the code into clickable links to the Lean 4 Web server. Love that 
 - [Link to main file](https://live.lean-lang.org/#codez={basic_parsed}) (slow)
 - [Link to exercises](https://live.lean-lang.org/#codez={exercises_parsed})
 
-![](https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Interior_illustration.svg/1024px-Interior_illustration.svg.png)
+![](https://upload.wikimedia.org/wikipedia/commons/b/b8/Path-connected_space.svg)
     """
     readme = readme.strip()
     with open("./README.md", "w") as f:
