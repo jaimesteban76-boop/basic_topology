@@ -54,6 +54,8 @@ The main file is [`basic.lean`](./basic_topology/basic.lean) and there is also a
 I also copied the code into clickable links to the Lean 4 Web server. Love that place
 - [Link to main file](https://live.lean-lang.org/#codez={basic_parsed}) (slow)
 - [Link to exercises](https://live.lean-lang.org/#codez={exercises_parsed})
+
+![](https://en.wikipedia.org/wiki/Interior_(topology)#/media/File:Interior_illustration.svg)
     """
     readme = readme.strip()
     with open("./README.md", "w") as f:
