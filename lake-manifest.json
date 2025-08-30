@@ -91,5 +91,5 @@
    "inputRev": "main",
    "inherited": true,
    "configFile": "lakefile.toml"}],
- "name": "BasicTopology",
+ "name": "basic_topology",
  "lakeDir": ".lake"}
