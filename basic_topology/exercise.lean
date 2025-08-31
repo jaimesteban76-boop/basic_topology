@@ -78,6 +78,9 @@ def taxicab_metric {X Y: Type*} (dX: X → X → ℝ) (dY: Y → Y → ℝ): X �
 theorem taxicab_is_metric {X Y: Type*} {dX: X → X → ℝ} {dY: Y → Y → ℝ} (hdX: IsMetric dX) (hdY: IsMetric dY): IsMetric (taxicab_metric dX dY) := by
   sorry
 
+theorem reverse_triangle_inequality {d: X → X → ℝ} (hd: IsMetric d) (x y z: X): |d x y - d y z| ≤ d x z := by
+  sorry
+
 -- definition of an isometry.
 -- notice the definition doesn't require d and d' are metric, just arbitrary functions.
 def isometry {X X': Type*} (d: X → X → ℝ) (d': X' → X' → ℝ) (f: X → X'): Prop :=
@@ -95,8 +98,8 @@ def closedball (d: X → X → ℝ) (x: X) (r: ℝ): Set X :=
 def sphere (d: X → X → ℝ) (x: X) (r: ℝ): Set X :=
  {z | d x z = r}
 
--- If r > 0 then x ∈ B(x, r)
-theorem openball_mem {d: X → X → ℝ} (hd: IsMetric d) (x: X) {r: ℝ} (hr: 0 < r): x ∈ openball d x r := by
+-- x ∈ B(x, r) iff. r > 0
+theorem openball_mem_iff {d: X → X → ℝ} (hd: IsMetric d) (x: X) {r: ℝ}: x ∈ openball d x r ↔ 0 < r := by
   sorry
 
 -- The open ball of radius zero is empty
@@ -107,12 +110,12 @@ theorem openball_zero_empty {d: X → X → ℝ} (hd: IsMetric d) (x: X): openba
 theorem closedball_zero_singleton {d: X → X → ℝ} (hd: IsMetric d) (x: X): closedball d x 0 = {x} := by
   sorry
 
--- If x0 ∈ B(x, r) and s = r - d(x, x0) then B(x0, s) ⊆ B(x, r)
-theorem openball_mem_smaller_ball {d: X → X → ℝ} (hd: IsMetric d) {x x0: X} {r: ℝ} (hx0: x0 ∈ openball d x r): openball d x0 (r - d x x0) ⊆ openball d x r := by
+-- If s = r - d(x, x0) then B(x0, s) ⊆ B(x, r)
+theorem openball_mem_smaller_ball {d: X → X → ℝ} (hd: IsMetric d) {x x0: X} {r: ℝ}: openball d x0 (r - d x x0) ⊆ openball d x r := by
   sorry
 
 -- If x0 ∈ C(x, r)ᶜ and s = r - d(x, x0) then B(x0, s) ⊆ C(x, r)ᶜ
-theorem closedball_compl_mem {d: X → X → ℝ} (hd: IsMetric d) {x x0: X} {r: ℝ} (hx0: x0 ∈ openball d x r): openball d x0 (r - d x x0) ⊆ openball d x r := by
+theorem closedball_compl_mem {d: X → X → ℝ} (hd: IsMetric d) {x x0: X} {r: ℝ} (hx0: x0 ∈ (closedball d x r)ᶜ): openball d x0 (d x x0 - r) ⊆ (closedball d x r)ᶜ := by
   sorry
 
 -- definition of an open set in a metric space
@@ -156,12 +159,18 @@ theorem openball_open {d: X → X → ℝ} (hd: IsMetric d) (x: X) (r: ℝ): met
 theorem closedball_closed {d: X → X → ℝ} (hd: IsMetric d) (x: X) (r: ℝ): metric_closedset d (closedball d x r) := by
   sorry
 
-theorem open_iff_union_of_balls (d: X → X → ℝ) (hd: IsMetric d) (A: Set X): metric_openset d A ↔ ∃ I: Type, ∃ x: I → X, ∃ r: I → ℝ, A = Set.iUnion (fun i => openball d (x i) (r i)) := by
+-- the set of open balls in a metric space
+def openballs (d: X → X → ℝ): Set (Set X) :=
+  ⋃ (x: X), ⋃ (r: ℝ), {openball d x r}
+
+theorem open_iff_sUnion_of_balls (d: X → X → ℝ) (hd: IsMetric d) (A: Set X): metric_openset d A ↔ ∃ 𝒰 ⊆ openballs d, A = ⋃₀ 𝒰 := by
   sorry
 
-theorem metric_open_sUnion {d: X → X → ℝ} (hd: IsMetric d) {C: Set (Set X)} (h: C ⊆ metric_opensets d): ⋃₀ C ∈ metric_opensets d := by
+-- in a metric space, arbitrary unions of open sets are open (doesnt actually depend on d being a metric)
+theorem metric_open_sUnion {d: X → X → ℝ} {C: Set (Set X)} (h: C ⊆ metric_opensets d): ⋃₀ C ∈ metric_opensets d := by
   sorry
 
+-- in a metric space, finite intersections of open sets are open
 theorem metric_open_finite_sInter {d: X → X → ℝ} (hd: IsMetric d) {C: Set (Set X)} (h1: C ⊆ metric_opensets d) (h2: Finite C): ⋂₀ C ∈ metric_opensets d := by
   sorry
 
@@ -286,10 +295,6 @@ theorem base_self (𝒯: Set (Set X)): base 𝒯 𝒯 := by
 
 theorem base_iff {𝒯: Set (Set X)} (hT: IsTopology 𝒯) (ℬ: Set (Set X)): base 𝒯 ℬ ↔ ∀ U ∈ 𝒯, ∀ x ∈ U, ∃ B ∈ ℬ, x ∈ B ∧ B ⊆ U := by
   sorry
-
--- The natural basis of a metric space: the set of open balls, expressed as the indexed union
-def openballs (d: X → X → ℝ): Set (Set X) :=
-  ⋃ (x: X) (r: ℝ), {openball d x r}
 
 theorem metric_openballs_base {d: X → X → ℝ} (hd: IsMetric d): base (metric_opensets d) (openballs d) := by
   sorry

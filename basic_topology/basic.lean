@@ -119,6 +119,14 @@ theorem taxicab_is_metric {X Y: Type*} {dX: X → X → ℝ} {dY: Y → Y → �
   triangle := sorry
 }
 
+theorem reverse_triangle_inequality {d: X → X → ℝ} (hd: IsMetric d) (x y z: X): |d x y - d y z| ≤ d x z := by
+  simp [abs]
+  constructor
+  · rw [hd.symm y z]
+    apply hd.triangle
+  · rw [add_comm, hd.symm x y]
+    apply hd.triangle
+
 -- definition of an isometry.
 -- notice the definition doesn't require d and d' are metric, just arbitrary functions.
 def isometry {X X': Type*} (d: X → X → ℝ) (d': X' → X' → ℝ) (f: X → X'): Prop :=
@@ -140,10 +148,13 @@ def closedball (d: X → X → ℝ) (x: X) (r: ℝ): Set X :=
 def sphere (d: X → X → ℝ) (x: X) (r: ℝ): Set X :=
  {z | d x z = r}
 
--- If r > 0 then x ∈ B(x, r)
-theorem openball_mem {d: X → X → ℝ} (hd: IsMetric d) (x: X) {r: ℝ} (hr: 0 < r): x ∈ openball d x r := by
-  simp [openball, dist_self hd]
-  exact hr
+-- x ∈ B(x, r) iff. r > 0
+theorem openball_mem_iff {d: X → X → ℝ} (hd: IsMetric d) (x: X) {r: ℝ}: x ∈ openball d x r ↔ 0 < r := by
+  constructor
+  · exact lt_of_le_of_lt (hd.nonneg x x)
+  · intro h
+    simp [openball, dist_self hd]
+    exact h
 
 -- The open ball of radius zero is empty
 theorem openball_zero_empty {d: X → X → ℝ} (hd: IsMetric d) (x: X): openball d x 0 = ∅ := by
@@ -163,13 +174,25 @@ theorem closedball_zero_singleton {d: X → X → ℝ} (hd: IsMetric d) (x: X): 
     have: d x z = 0 := (hd.eq_iff x z).mp (Eq.symm h)
     exact le_of_eq this
 
--- If x0 ∈ B(x, r) and s = r - d(x, x0) then B(x0, s) ⊆ B(x, r)
-theorem openball_mem_smaller_ball {d: X → X → ℝ} (hd: IsMetric d) {x x0: X} {r: ℝ} (hx0: x0 ∈ openball d x r): openball d x0 (r - d x x0) ⊆ openball d x r := by
-  sorry
+-- If s = r - d(x, x0) then B(x0, s) ⊆ B(x, r)
+theorem openball_mem_smaller_ball {d: X → X → ℝ} (hd: IsMetric d) {x x0: X} {r: ℝ}: openball d x0 (r - d x x0) ⊆ openball d x r := by
+  intro z hz
+  calc
+    d x z ≤ d x x0 + d x0 z       := by exact hd.triangle x x0 z
+        _ < d x x0 + (r - d x x0) := (Real.add_lt_add_iff_left (d x x0)).mpr hz
+        _ = r                     := add_sub_cancel (d x x0) r
 
 -- If x0 ∈ C(x, r)ᶜ and s = r - d(x, x0) then B(x0, s) ⊆ C(x, r)ᶜ
-theorem closedball_compl_mem {d: X → X → ℝ} (hd: IsMetric d) {x x0: X} {r: ℝ} (hx0: x0 ∈ openball d x r): openball d x0 (r - d x x0) ⊆ openball d x r := by
-  sorry
+theorem closedball_compl_mem {d: X → X → ℝ} (hd: IsMetric d) {x x0: X} {r: ℝ} (hx0: x0 ∈ (closedball d x r)ᶜ): openball d x0 (d x x0 - r) ⊆ (closedball d x r)ᶜ := by
+  intro z hz
+  simp_all [closedball]
+  calc
+    r = r + r - r             := by exact Eq.symm (add_sub_cancel_right r r)
+    _ < d x x0 + d x x0 - r   := by sorry
+    _ = d x x0 - (r - d x x0) := by exact Eq.symm (sub_sub_eq_add_sub (d x x0) r (d x x0))
+    _ ≤ d x x0 - d x0 z       := by sorry
+    _ ≤ |d x x0 - d x0 z|     := by exact le_abs_self (d x x0 - d x0 z)
+    _ ≤ d x z                 := by exact reverse_triangle_inequality hd x x0 z
 
 -- definition of an open set in a metric space
 -- we will give them the prefix `metric_` since we need these names later
@@ -225,27 +248,67 @@ theorem openball_open {d: X → X → ℝ} (hd: IsMetric d) (x: X) (r: ℝ): met
   exists r - d x z
   constructor
   · exact sub_pos.mpr hz
-  · exact openball_mem_smaller_ball hd hz
+  · exact openball_mem_smaller_ball hd
 
 -- Closed ball is closed
 theorem closedball_closed {d: X → X → ℝ} (hd: IsMetric d) (x: X) (r: ℝ): metric_closedset d (closedball d x r) := by
-  sorry
+  intro x0 hx0
+  exists d x x0 - r
+  constructor
+  · simp_all [closedball]
+  · exact closedball_compl_mem hd hx0
 
-theorem open_iff_union_of_balls (d: X → X → ℝ) (hd: IsMetric d) (A: Set X): metric_openset d A ↔ ∃ I: Type, ∃ x: I → X, ∃ r: I → ℝ, A = Set.iUnion (fun i => openball d (x i) (r i)) := by
+-- the set of open balls in a metric space
+def openballs (d: X → X → ℝ): Set (Set X) :=
+  ⋃ (x: X), ⋃ (r: ℝ), {openball d x r}
+
+theorem open_iff_sUnion_of_balls (d: X → X → ℝ) (hd: IsMetric d) (A: Set X): metric_openset d A ↔ ∃ 𝒰 ⊆ openballs d, A = ⋃₀ 𝒰 := by
   apply Iff.intro
   · intro h
-    sorry
-  · intro ⟨I, x, r, h⟩
-    rw [h]
-    intro z hz
-    sorry
+    exists fun U => U ⊆ A ∧ U ∈ openballs d
+    constructor
+    · intro U ⟨_, hU2⟩
+      exact hU2
+    · ext z
+      constructor
+      · intro hz
+        obtain ⟨r, hr1, hr2⟩ := h z hz
+        exists openball d z r
+        repeat' constructor
+        · exact hr2
+        · exact (openball_mem_iff hd z).mpr hr1
+      · intro ⟨U, ⟨hU1, _⟩, hU3⟩
+        exact hU1 hU3
+  · intro ⟨𝒰, h𝒰1, h𝒰2⟩
+    rw [h𝒰2]
+    intro z ⟨U, hU1, hU2⟩
+    have := h𝒰1 hU1
+    simp_all [openballs]
+    obtain ⟨x, r, hx⟩ := this
+    exists r - d x z
+    constructor
+    · rw [←hx] at hU2
+      simp_all [openball]
+    · calc
+        openball d z (r - d x z)
+        _ ⊆ openball d x r := openball_mem_smaller_ball hd
+        _ = U              := hx
+        _ ⊆ ⋃₀ 𝒰          := Set.subset_sUnion_of_subset 𝒰 U (fun ⦃a⦄ a ↦ a) hU1
 
-theorem metric_open_sUnion {d: X → X → ℝ} (hd: IsMetric d) {C: Set (Set X)} (h: C ⊆ metric_opensets d): ⋃₀ C ∈ metric_opensets d := by
-  intro z hz
-  obtain ⟨U, hU⟩ := hz
-  sorry
+-- in a metric space, arbitrary unions of open sets are open (doesnt actually depend on d being a metric)
+theorem metric_open_sUnion {d: X → X → ℝ} {C: Set (Set X)} (h: C ⊆ metric_opensets d): ⋃₀ C ∈ metric_opensets d := by
+  intro z ⟨U, hU1, hU2⟩
+  obtain ⟨r, hr1, hr2⟩ := h hU1 z hU2
+  exists r
+  constructor
+  · exact hr1
+  · exact Set.subset_sUnion_of_subset C U hr2 hU1
 
+-- in a metric space, finite intersections of open sets are open
 theorem metric_open_finite_sInter {d: X → X → ℝ} (hd: IsMetric d) {C: Set (Set X)} (h1: C ⊆ metric_opensets d) (h2: Finite C): ⋂₀ C ∈ metric_opensets d := by
+  intro z hz
+  simp at hz
+  -- should be able to get a finite set of radii
   sorry
 
 /-
@@ -368,8 +431,8 @@ def indiscrete_topology (X: Type*): Topology X := {
 
 -- the opensets in a metric space form a topology
 theorem metric_opensets_is_topology {d: X → X → ℝ} (hd: IsMetric d): IsTopology (metric_opensets d) := {
-  sUnion := by exact fun _ => metric_open_sUnion hd
-  finite_sInter := by exact fun _ => metric_open_finite_sInter hd
+  sUnion := by intro; exact metric_open_sUnion
+  finite_sInter := by intro; exact metric_open_finite_sInter hd
 }
 
 -- given a metric on X, put a topology on X
@@ -476,10 +539,6 @@ theorem base_iff {𝒯: Set (Set X)} (hT: IsTopology 𝒯) (ℬ: Set (Set X)): b
   · intro h U hU
     sorry
 
--- The natural basis of a metric space: the set of open balls, expressed as the indexed union
-def openballs (d: X → X → ℝ): Set (Set X) :=
-  ⋃ (x: X) (r: ℝ), {openball d x r}
-
 theorem metric_openballs_base {d: X → X → ℝ} (hd: IsMetric d): base (metric_opensets d) (openballs d) := by
   apply (base_iff (metric_opensets_is_topology hd) (openballs d)).mpr
   intro U hU x hx
@@ -487,7 +546,7 @@ theorem metric_openballs_base {d: X → X → ℝ} (hd: IsMetric d): base (metri
   exists openball d x r
   repeat' (apply And.intro)
   · simp [openballs]
-  · exact openball_mem hd x hr1
+  · exact (openball_mem_iff hd x).mpr hr1
   · exact hr2
 
 theorem discrete_base : base (@Set.univ (Set X)) (⋃ x, {x}) := by
@@ -810,7 +869,7 @@ theorem openball_neighborhood {d: X → X → ℝ} (hd: IsMetric d) (x: X) {r: �
   exists (openball d x r)
   repeat' constructor
   · exact openball_open hd x r
-  · exact openball_mem hd x hr
+  · exact (openball_mem_iff hd x).mpr hr
   · rfl
 
 -- simple lemma: if balls are too far apart, their intersection is empty.
