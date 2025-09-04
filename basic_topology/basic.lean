@@ -4,8 +4,8 @@ Formalization of basic point-set topology.
 
 - Mathlib docs: https://leanprover-community.github.io/mathlib4_docs/
 - Loogle: https://loogle.lean-lang.org/
-- Letterlike symbols can be found on this page: https://en.wikipedia.org/wiki/Letterlike_Symbols
-  - e.g. script characters: ℬ, 𝒩, 𝒪, 𝒯, 𝒰, 𝒱, 𝒲, 𝒳, 𝒴, 𝒵
+- editor shortcuts:
+  - mathcal characters e.g. ℬ, 𝒩, 𝒪, 𝒯, 𝒰 are \McB, \McN, \McU, \McT, \McU
   - type subscripts (₁, ₂, ₃) in the editor via \1, \2, \3
   - type sUnion (⋃₀) and sInter (⋂₀) via \sU and \sI
 
@@ -14,14 +14,15 @@ Formalization of basic point-set topology.
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Data.Set.Lattice
-import Mathlib.Algebra.Order.GroupWithZero.Unbundled.Basic
+--import Mathlib.Algebra.Order.GroupWithZero.Unbundled.Basic -- too many dependencies
+import Mathlib.Tactic.Ring
 
 set_option linter.style.commandStart false
 set_option linter.style.longLine false
 
 universe u
 
-variable {X : Type u}
+variable {X: Type u}
 
 /-
 
@@ -63,7 +64,6 @@ theorem neq_dist_pos {d: X → X → ℝ} (hd: IsMetric d) (x y: X): x ≠ y ↔
   simp [not_congr (hd.eq_iff x y), LE.le.lt_iff_ne (hd.nonneg x y), ne_comm]
 
 -- the discrete metric on an arbitrary type
-@[simp]
 def discrete_metric (X: Type*) [DecidableEq X]: X → X → ℝ :=
   fun x y => if x = y then 0 else 1
 
@@ -71,52 +71,62 @@ theorem discrete_metric_is_metric (X: Type*) [DecidableEq X]: IsMetric (discrete
   nonneg := by
     intro x y
     by_cases x = y
-    repeat simp_all
+    repeat simp_all [discrete_metric]
   eq_iff := by
     intro x y
     constructor
     · exact fun h => if_pos h
     · intro h
-      simp at h
+      simp [discrete_metric] at h
       exact h
   symm := by
     intro x y
     by_cases h: x = y
-    · simp [h]
-    · simp [h]
+    · simp [discrete_metric, h]
+    · simp [discrete_metric, h]
       exact fun a => h (id (Eq.symm a))
   triangle := by
     intro x y z
     by_cases x = y <;> -- tactic combinator
     by_cases x = z <;>
     by_cases y = z
-    repeat simp_all
+    repeat simp_all [discrete_metric]
 }
 
 -- Taxicab metric: given two metrics, their sum is a metric on the product space.
-@[simp]
 def taxicab_metric {X Y: Type*} (dX: X → X → ℝ) (dY: Y → Y → ℝ): X × Y → X × Y → ℝ :=
   fun (x1, y1) (x2, y2) => dX x1 x2 + dY y1 y2
 
 theorem taxicab_is_metric {X Y: Type*} {dX: X → X → ℝ} {dY: Y → Y → ℝ} (hdX: IsMetric dX) (hdY: IsMetric dY): IsMetric (taxicab_metric dX dY) := {
-  nonneg := by
-    intro (x1, y1) (x2, y2)
-    exact add_nonneg (hdX.nonneg x1 x2) (hdY.nonneg y1 y2)
+  nonneg := by intros; apply add_nonneg (hdX.nonneg _ _) (hdY.nonneg _ _)
   eq_iff := by
     intro (x1, y1) (x2, y2)
-    simp
+    simp [taxicab_metric]
     constructor
-    · intro ⟨h1, h2⟩
-      rw [(hdX.eq_iff x1 x2).mp h1, (hdY.eq_iff y1 y2).mp h2]
-      apply zero_add
+    · intro; simp_all [hdX.eq_iff, hdY.eq_iff]
     · intro h
       constructor
-      · have := hdX.nonneg x1 x2
-        have := hdY.nonneg y1 y2
-        sorry
-      · sorry
-  symm := by simp [hdX.symm, hdY.symm]
-  triangle := sorry
+      · have hY1 := hdY.nonneg y1 y2
+        rw [hdX.eq_iff x1 x2]
+        rw [←h] at hY1
+        apply le_antisymm
+        · apply nonpos_of_add_le_left hY1
+        · apply hdX.nonneg
+      · rw [hdY.eq_iff]
+        apply le_antisymm
+        · have hX1 := hdX.nonneg x1 x2
+          rw [←h] at hX1
+          apply nonpos_of_add_le_right hX1
+        · apply hdY.nonneg
+  symm := by intros; simp [taxicab_metric, hdY.symm, hdX.symm]
+  triangle :=  by
+    intro (x1, y1) (x2, y2) (x3, y3)
+    simp
+    calc
+      dX x1 x3 + dY y1 y3
+        ≤ (dX x1 x2 + dX x2 x3) + dY y1 y3              := by apply add_le_add_right (hdX.triangle _ _ _)
+      _ ≤ (dX x1 x2 + dX x2 x3) + (dY y1 y2 + dY y2 y3) := by apply (add_le_add_iff_left _).mpr (hdY.triangle _ _ _)
+      _ = dX x1 x2 + dY y1 y2 + (dX x2 x3 + dY y2 y3)   := by ring_nf
 }
 
 theorem reverse_triangle_inequality {d: X → X → ℝ} (hd: IsMetric d) (x y z: X): |d x y - d y z| ≤ d x z := by
@@ -131,6 +141,9 @@ theorem reverse_triangle_inequality {d: X → X → ℝ} (hd: IsMetric d) (x y z
 -- notice the definition doesn't require d and d' are metric, just arbitrary functions.
 def isometry {X X': Type*} (d: X → X → ℝ) (d': X' → X' → ℝ) (f: X → X'): Prop :=
   ∀ x y, d x y = d' (f x) (f y)
+
+theorem isometry_id (d: X → X → ℝ): isometry d d id := by
+  intro _ _; rfl
 
 theorem isometry_is_injective {X X': Type*} {d: X → X → ℝ} {d': X' → X' → ℝ} (hd: IsMetric d) (hd': IsMetric d') (f: X → X') (hf: isometry d d' f): Function.Injective f := by
   intro x y fx_eq_fy
@@ -148,6 +161,12 @@ def closedball (d: X → X → ℝ) (x: X) (r: ℝ): Set X :=
 def sphere (d: X → X → ℝ) (x: X) (r: ℝ): Set X :=
  {z | d x z = r}
 
+-- The open ball of radius zero is empty
+theorem openball_zero_empty {d: X → X → ℝ} (hd: IsMetric d) (x: X): openball d x 0 = ∅ := by
+  ext z
+  simp [openball]
+  exact hd.nonneg x z
+
 -- x ∈ B(x, r) iff. r > 0
 theorem openball_mem_iff {d: X → X → ℝ} (hd: IsMetric d) (x: X) {r: ℝ}: x ∈ openball d x r ↔ 0 < r := by
   constructor
@@ -155,12 +174,6 @@ theorem openball_mem_iff {d: X → X → ℝ} (hd: IsMetric d) (x: X) {r: ℝ}: 
   · intro h
     simp [openball, dist_self hd]
     exact h
-
--- The open ball of radius zero is empty
-theorem openball_zero_empty {d: X → X → ℝ} (hd: IsMetric d) (x: X): openball d x 0 = ∅ := by
-  ext z
-  simp [openball]
-  exact hd.nonneg x z
 
 -- The closed ball of radius zero is a singleton
 theorem closedball_zero_singleton {d: X → X → ℝ} (hd: IsMetric d) (x: X): closedball d x 0 = {x} := by
@@ -173,6 +186,35 @@ theorem closedball_zero_singleton {d: X → X → ℝ} (hd: IsMetric d) (x: X): 
   · intro h
     have: d x z = 0 := (hd.eq_iff x z).mp (Eq.symm h)
     exact le_of_eq this
+
+-- In the discrete metric, if 0 < r ≤ 1 then B(x, r) = {x}
+theorem discrete_openball_singleton {X: Type*} [DecidableEq X] (x: X) {r: ℝ} (h1: 0 < r) (h2: r ≤ 1): openball (discrete_metric X) x r = {x} := by
+  apply le_antisymm
+  · intro z hz
+    simp_all [discrete_metric, openball]
+    have := lt_of_lt_of_le hz h2
+    by_contra h
+    have: x ≠ z := fun h' ↦ h (id (Eq.symm h'))
+    simp_all
+  · intro _ hx
+    rw [hx]
+    exact (openball_mem_iff (discrete_metric_is_metric X) x).mpr h1
+
+-- In the discrete metric, then B(x, 1) = {x}
+theorem discrete_openball_unit {X: Type*} [DecidableEq X] (x: X): openball (discrete_metric X) x 1 = {x} := by
+   rw [discrete_openball_singleton x zero_lt_one (le_refl 1)]
+
+-- In the discrete metric, if r > 1 then B(x, r) is the whole space
+theorem discrete_openball_univ (X: Type*) [DecidableEq X] (x: X) {r: ℝ} (h: 1 < r): openball (discrete_metric X) x r = Set.univ := by
+  apply Set.eq_univ_of_univ_subset
+  simp_all [openball]
+  apply Set.eq_univ_of_univ_subset
+  intro z _
+  simp
+  by_cases x = z
+  · simp_all [discrete_metric]
+    exact lt_trans Real.zero_lt_one h
+  · simp_all [discrete_metric]
 
 -- If s = r - d(x, x0) then B(x0, s) ⊆ B(x, r)
 theorem openball_mem_smaller_ball {d: X → X → ℝ} (hd: IsMetric d) {x x0: X} {r: ℝ}: openball d x0 (r - d x x0) ⊆ openball d x r := by
@@ -206,10 +248,6 @@ def metric_closedset (d: X → X → ℝ) (A: Set X): Prop :=
 
 def metric_clopenset (d: X → X → ℝ) (A: Set X): Prop :=
   metric_openset d A ∧ metric_closedset d A
-
--- the set of all open sets in a metric space
-def metric_opensets (d: X → X → ℝ): Set (Set X) :=
- {A | metric_openset d A}
 
 -- The empty set is clopen
 theorem metric_empty_clopen (d: X → X → ℝ): metric_clopenset d ∅ := by
@@ -295,6 +333,27 @@ theorem open_iff_sUnion_of_balls (d: X → X → ℝ) (hd: IsMetric d) (A: Set X
         _ = U              := hx
         _ ⊆ ⋃₀ 𝒰          := Set.subset_sUnion_of_subset 𝒰 U (fun ⦃a⦄ a ↦ a) hU1
 
+-- the set of all open sets in a metric space
+def metric_opensets (d: X → X → ℝ): Set (Set X) :=
+ {A | metric_openset d A}
+
+theorem openballs_sub_opensets {d: X → X → ℝ} (hd: IsMetric d): openballs d ⊆ metric_opensets d := by
+  intro _ hU
+  simp_all [openballs]
+  obtain ⟨x, r, hU⟩ := hU
+  rw [←hU]
+  exact openball_open hd x r
+
+-- Every set is open in the topology generated by the discrete metric.
+theorem discrete_opensets (X: Type*) [DecidableEq X]: metric_opensets (discrete_metric X) = Set.univ := by
+  apply Set.eq_univ_of_univ_subset
+  intro _ _ _ hx
+  exists 1
+  constructor
+  · exact zero_lt_one
+  · rw [discrete_openball_unit]
+    exact Set.singleton_subset_iff.mpr hx
+
 -- in a metric space, arbitrary unions of open sets are open (doesnt actually depend on d being a metric)
 theorem metric_open_sUnion {d: X → X → ℝ} {C: Set (Set X)} (h: C ⊆ metric_opensets d): ⋃₀ C ∈ metric_opensets d := by
   intro z ⟨U, hU1, hU2⟩
@@ -308,6 +367,7 @@ theorem metric_open_sUnion {d: X → X → ℝ} {C: Set (Set X)} (h: C ⊆ metri
 theorem metric_open_finite_sInter {d: X → X → ℝ} (hd: IsMetric d) {C: Set (Set X)} (h1: C ⊆ metric_opensets d) (h2: Finite C): ⋂₀ C ∈ metric_opensets d := by
   intro z hz
   simp at hz
+
   -- should be able to get a finite set of radii
   sorry
 
@@ -403,11 +463,6 @@ theorem discrete_is_topology (X: Type*): IsTopology (@Set.univ (Set X)) := {
   finite_sInter := by intros; trivial
 }
 
-def discrete_topology (X: Type*): Topology X := {
-  opensets := @Set.univ (Set X)
-  is_topology := discrete_is_topology X
-}
-
 -- the indiscrete (aka antidiscrete) topology! it is slightly less trivial to prove..
 theorem indiscrete_is_topology (X: Type*): IsTopology {∅, @Set.univ X} := {
   sUnion := by apply Set.sUnion_mem_empty_univ
@@ -422,11 +477,6 @@ theorem indiscrete_is_topology (X: Type*): IsTopology {∅, @Set.univ X} := {
       match h𝒰 hU with
       | Or.inl h' => rw [h'] at hU; contradiction
       | Or.inr h' => exact h'
-}
-
-def indiscrete_topology (X: Type*): Topology X := {
-  opensets := {∅, Set.univ}
-  is_topology := indiscrete_is_topology X
 }
 
 -- the opensets in a metric space form a topology
@@ -509,112 +559,212 @@ def sierpiński_topology: Topology Bool := {
 
 -- Definition: ℬ is a base for 𝒯 if every open set of 𝒯 is a union of sets from ℬ
 def base (𝒯 ℬ: Set (Set X)): Prop :=
-  ∀ U ∈ 𝒯, ∃ 𝒰 ⊆ ℬ, ⋃₀ 𝒰 = U
+  ℬ ⊆ 𝒯 ∧ ∀ U ∈ 𝒯, ∃ 𝒰 ⊆ ℬ, U = ⋃₀ 𝒰
 
 -- Every topology is a base for itself.
 theorem base_self (𝒯: Set (Set X)): base 𝒯 𝒯 := by
-  intro U hU
+constructor
+· rfl
+· intro U hU
   exists {U}
   constructor
   · exact Set.singleton_subset_iff.mpr hU
   · ext; simp
 
-theorem base_iff {𝒯: Set (Set X)} (hT: IsTopology 𝒯) (ℬ: Set (Set X)): base 𝒯 ℬ ↔ ∀ U ∈ 𝒯, ∀ x ∈ U, ∃ B ∈ ℬ, x ∈ B ∧ B ⊆ U := by
+-- ℬ is a base for 𝒯 iff. ∀ U ∈ 𝒯, ∀ x ∈ U, ∃ B ∈ ℬ, x ∈ B ⊆ U. Does not require 𝒯 to be a topology.
+theorem base_iff (𝒯 ℬ: Set (Set X)): base 𝒯 ℬ ↔ ℬ ⊆ 𝒯 ∧ ∀ U ∈ 𝒯, ∀ x ∈ U, ∃ B ∈ ℬ, x ∈ B ∧ B ⊆ U := by
   constructor
-  · intro h U hU x hx
-    obtain ⟨C, hC⟩ := h U hU
-    rw [←hC.right] at hx
-    obtain ⟨Bx, hBx⟩ := hx
-    exists Bx
-    repeat' constructor
-    · exact hC.left hBx.left
-    · exact hBx.right
-    · rw [←hC.right]
-      intro x hx -- could probably be simplified
-      apply Set.mem_sUnion.mpr
+  · intro h
+    constructor
+    · exact h.left
+    · intro U hU x hx
+      obtain ⟨C, hC⟩ := h.right U hU
+      rw [hC.right] at hx
+      obtain ⟨Bx, hBx⟩ := hx
       exists Bx
+      repeat' constructor
+      · exact hC.left hBx.left
+      · exact hBx.right
+      · rw [hC.right]
+        intro x hx
+        apply Set.mem_sUnion.mpr
+        exists Bx
+        constructor
+        · exact hBx.left
+        · exact hx
+  · intro h
+    constructor
+    · exact h.left
+    · intro U hU
+      exists {B ∈ ℬ | B ⊆ U}
+      simp
+      ext x
       constructor
-      · exact hBx.left
-      · exact hx
-  · intro h U hU
-    sorry
+      · intro hx
+        obtain ⟨B, _, _, _⟩ := h.right U hU x hx
+        exists B
+      · intro  ⟨B, ⟨_, hB2⟩, hB3⟩
+        exact hB2 hB3
 
+-- The set ℬ = {{x} | x ∈ X} is a base for the discrete topology.
+theorem discrete_base (X: Type*): base (@Set.univ (Set X)) (⋃ x, {x}) := by
+  apply (base_iff _ _).mpr
+  constructor
+  · exact fun _ _ => trivial
+  · intro U hU x hx
+    exists {x}
+    repeat' (apply And.intro)
+    · simp
+    · rfl
+    · exact Set.singleton_subset_iff.mpr hx
+
+-- The set ℬ = {{X}} is a base for the indiscrete topology.
+theorem indiscrete_base (X: Type*): base {∅, @Set.univ X} {@Set.univ X} := by
+  constructor
+  · apply Set.subset_insert
+  · intro U hU
+    match hU with
+    | Or.inl _ => exists ∅; simp_all
+    | Or.inr _ => exists {Set.univ}; simp_all
+
+-- The set of open balls is a base for the metric topology
 theorem metric_openballs_base {d: X → X → ℝ} (hd: IsMetric d): base (metric_opensets d) (openballs d) := by
-  apply (base_iff (metric_opensets_is_topology hd) (openballs d)).mpr
-  intro U hU x hx
-  obtain ⟨r, hr1, hr2⟩ := hU x hx
-  exists openball d x r
-  repeat' (apply And.intro)
-  · simp [openballs]
-  · exact (openball_mem_iff hd x).mpr hr1
-  · exact hr2
-
-theorem discrete_base : base (@Set.univ (Set X)) (⋃ x, {x}) := by
-  apply (base_iff (discrete_topology X).is_topology _).mpr
-  intro U hU x hx
-  exists {x}
-  repeat' (apply And.intro)
-  · simp
-  · rfl
-  · exact Set.singleton_subset_iff.mpr hx
+  apply (base_iff _ _).mpr
+  constructor
+  · exact openballs_sub_opensets hd
+  · intro U hU x hx
+    obtain ⟨r, hr1, hr2⟩ := hU x hx
+    exists openball d x r
+    repeat' (apply And.intro)
+    · simp [openballs]
+    · exact (openball_mem_iff hd x).mpr hr1
+    · exact hr2
 
 -- sierpiński base
 theorem sierpiński_base : base (sierpiński_opensets) {{true}, {false, true}} := by
-  intro U hU
-  by_cases false ∈ U
-  · exists {{false, true}}
-    constructor
-    · apply Set.subset_insert
-    · by_cases true ∈ U <;>
+  constructor
+  · simp [sierpiński_opensets]
+  · intro U hU
+    by_cases false ∈ U
+    · exists {{false, true}}
+      constructor
+      · apply Set.subset_insert
+      · by_cases true ∈ U <;>
+          cases hU with
+          | inl => simp_all
+          | inr h => cases h with
+            | inl => simp_all
+            | inr => simp_all
+    · by_cases ht: true ∈ U
+      · exists {{true}}
         cases hU with
         | inl => simp_all
         | inr h => cases h with
           | inl => simp_all
           | inr => simp_all
-  · by_cases ht: true ∈ U
-    · exists {{true}}
-      cases hU with
-      | inl => simp_all
-      | inr h => cases h with
+      · exists {}
+        cases hU with
         | inl => simp_all
-        | inr => simp_all
-    · exists {}
-      cases hU with
-      | inl => simp_all
-      | inr h => cases h with
-        | inl => simp_all
-        | inr => simp_all
+        | inr h => cases h with
+          | inl => simp_all
+          | inr => simp_all
 
-def IsBase (ℬ: Set (Set X)): Prop :=
+-- We say ℬ "is a base" if there exists a topology for which it is a base.
+def is_base (ℬ: Set (Set X)): Prop :=
   ∃ 𝒯, IsTopology 𝒯 ∧ base 𝒯 ℬ
 
--- Assuming 𝒯 is a topology, obviously if ℬ is a base for 𝒯, then ℬ is a base for some topology... namely 𝒯!
-theorem base_isBase {𝒯 ℬ: Set (Set X)} (h1: IsTopology 𝒯) (h2: base 𝒯 ℬ): IsBase ℬ := by
+-- If 𝒯 is a topology then 𝒯 is a base... for itself.
+theorem topology_is_base {𝒯: Set (Set X)} (h: IsTopology 𝒯): is_base 𝒯 := by
+  exists 𝒯
+  exact ⟨h, base_self 𝒯⟩
+
+-- If ℬ is a base for a topology 𝒯 is a topology then ℬ is a base... for 𝒯.
+theorem base_is_base {𝒯 ℬ: Set (Set X)} (h1: IsTopology 𝒯) (h2: base 𝒯 ℬ): is_base ℬ := by
   exists 𝒯
 
 -- Given an arbitrary collection ℬ, `unions ℬ` is the set of unions obtained of sets from ℬ.
 def unions (ℬ: Set (Set X)): Set (Set X) :=
   ⋃ 𝒰 ⊆ ℬ, {⋃₀ 𝒰}
 
+-- some simple theorems about `unions`
+theorem unions_sub (ℬ: Set (Set X)): ℬ ⊆ unions ℬ := by
+  intro U _
+  simp [unions]
+  exists {U}
+  simp_all
+
+theorem unions_mono {ℬ ℬ': Set (Set X)} (h: ℬ ⊆ ℬ'): unions ℬ ⊆ unions ℬ' := by
+  simp_all [unions]
+  intro B hB
+  exists B
+  constructor
+  · exact le_trans hB h
+  · rfl
+
+-- the unions operator is idempotent
+-- forward direction is obvious
+-- for the reverse, the idea is if U = ⋃ i, V i and each V i = ⋃ j, B i j then U = ⋃ i j, B i j
+theorem unions_idem {ℬ: Set (Set X)}: unions ℬ = unions (unions ℬ) := by
+  apply le_antisymm
+  · apply unions_sub
+  · intro U hU
+    simp_all [unions]
+    obtain ⟨a, ha1, ha2⟩ := hU
+    simp_all
+    rw [←ha2]
+    exists a
+    sorry
+
+theorem unions_topology {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): 𝒯 = unions 𝒯 := by
+  apply le_antisymm
+  · apply unions_sub
+  · intro U hU
+    simp_all [unions]
+    obtain ⟨𝒰, h𝒰1, h𝒰2⟩ := hU
+    rw [h𝒰2]
+    exact h𝒯.sUnion 𝒰 h𝒰1
+
+theorem base_unions (ℬ: Set (Set X)): base (unions ℬ) ℬ := by
+  constructor
+  · apply unions_sub
+  · intro U hU
+    simp_all [unions]
+
+theorem base_iff_unions {𝒯 ℬ: Set (Set X)}: base 𝒯 ℬ ↔ ℬ ⊆ 𝒯 ∧ 𝒯 = unions ℬ := by
+  constructor
+  · intro h
+    constructor
+    · exact h.left
+    · sorry
+  · sorry
+
 -- ℬ is a base iff. `unions ℬ` is a topology.
-theorem is_base_iff_unions_topology (ℬ: Set (Set X)): IsBase ℬ ↔ IsTopology (unions ℬ) := by
+theorem is_base_iff_unions_topology (ℬ: Set (Set X)): is_base ℬ ↔ IsTopology (unions ℬ) := by
+  --simp [unions]
   apply Iff.intro
-  · intro ⟨𝒯, h𝒯₁, h𝒯₂⟩
+  · intro ⟨𝒯, h𝒯₁, h𝒯₂, h𝒯₃⟩
     have: 𝒯 = unions ℬ := by
-      sorry
+      apply le_antisymm
+
+
+      sorry -- exact?
+      rw [unions_topology h𝒯₁]
+      exact unions_mono h𝒯₂
     rw [←this]
     exact h𝒯₁
   · intro h
-    exists (unions ℬ)
-    apply And.intro
+    exists unions ℬ
+    constructor
     · exact h
-    · sorry
+    · constructor
+      · apply unions_sub
+      · simp [unions]
 
 structure base_conditions (ℬ: Set (Set X)): Prop where
   B1: X = ⋃₀ ℬ
   B2: ∀ B' ∈ ℬ, ∀ B'' ∈ ℬ, ∀ x ∈ B' ∩ B'', ∃ B ∈ ℬ, x ∈ B ∧ B ⊆ B' ∩ B''
 
-theorem is_base_iff_base_conditions (ℬ: Set (Set X)): IsBase ℬ ↔ base_conditions ℬ := by
+theorem is_base_iff_base_conditions (ℬ: Set (Set X)): is_base ℬ ↔ base_conditions ℬ := by
   constructor
   · intro ⟨T, hT₁, hT₂⟩
     constructor
@@ -629,10 +779,17 @@ theorem is_base_iff_base_conditions (ℬ: Set (Set X)): IsBase ℬ ↔ base_cond
 def neighborhood (𝒯: Set (Set X)) (N: Set X) (x: X): Prop :=
   ∃ U ∈ 𝒯, x ∈ U ∧ U ⊆ N
 
+-- The whole space is a neighborhood of every point
+theorem neighborhood_univ {𝒯: Set (Set X)} (h: IsTopology 𝒯) (x: X): neighborhood 𝒯 Set.univ x := by
+  exists Set.univ
+  simp
+  exact univ_open h
+
 -- If x ∈ U and U is open then U is a neighborhood of x
 theorem open_neighborhood (𝒯: Set (Set X)) {U: Set X} {x: X} (h1: x ∈ U) (h2: U ∈ 𝒯): neighborhood 𝒯 U x := by
   exists U
 
+-- A set is open iff. it is a neighborhood of all its points.
 theorem open_iff_neighborhood_of_all_points (𝒯: Set (Set X)) (A: Set X): A ∈ 𝒯 ↔ ∀ x ∈ A, neighborhood 𝒯 A x := by
   apply Iff.intro
   · intro h x hx
@@ -642,7 +799,25 @@ theorem open_iff_neighborhood_of_all_points (𝒯: Set (Set X)) (A: Set X): A �
     -- need to show A is equal to the union of U
     sorry
 
--- the set of neighborhoods
+-- In the discrete topology, N is a neighborhood of x iff x ∈ N.
+theorem discrete_neighborhood_iff {X: Type*} (N: Set X) (x: X): neighborhood Set.univ N x ↔ x ∈ N := by
+  constructor
+  · intro ⟨U, _, hU2, hU3⟩
+    exact hU3 hU2
+  · intro
+    exists {x}
+    simp_all
+
+-- In the indiscrete topology, N is a neighborhood of x iff N is the whole space
+theorem indiscrete_neighborhood_iff {X: Type*} (N: Set X) (x: X): neighborhood {∅, Set.univ} N x ↔ N = Set.univ := by
+  constructor
+  · intro ⟨_, _, hU2, _⟩
+    simp_all [ne_of_mem_of_not_mem' hU2]
+  · intro h
+    rw [h]
+    apply neighborhood_univ (indiscrete_is_topology X)
+
+-- The set of neighborhoods of a point
 def Nbhds (𝒯: Set (Set X)) (x: X): Set (Set X) :=
  {N | neighborhood 𝒯 N x}
 
@@ -689,23 +864,54 @@ def neighborhood_topology (𝒩: X → Set (Set X)): Set (Set X) :=
 theorem neighborhood_axioms_unique_topology (𝒩: X → Set (Set X)) (h𝒩: neighborhood_axioms 𝒩): ∃! 𝒯, (IsTopology 𝒯 ∧ 𝒩 = Nbhds 𝒯) := by
   exists neighborhood_topology 𝒩
   repeat' (apply And.intro)
-  sorry -- show that `neighborhood_topology 𝒩` is a topology
-  sorry -- show that `𝒩 = Nbhds (neighborhood_topology 𝒩)`
-  intro 𝒩' ⟨h1, h2⟩
-  sorry -- suppose 𝒩' is a topology and 𝒩 = Nbhds 𝒩', want to show 𝒩' = neighborhood_topology 𝒩
+  · sorry -- show that `neighborhood_topology 𝒩` is a topology
+  · sorry -- show that `𝒩 = Nbhds (neighborhood_topology 𝒩)`
+  · intro 𝒩' ⟨h1, h2⟩
+    sorry -- suppose 𝒩' is a topology and 𝒩 = Nbhds 𝒩', want to show 𝒩' = neighborhood_topology 𝒩
 
 -- TODO: define neighrbohood topology
 
 -- TODO: fundamental neighborhood system aka neighborhood basis
 
-def interior (𝒯: Set (Set X)) (A: Set X): Set X :=
- {x | neighborhood 𝒯 A x}
+def interior_point (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
+  neighborhood 𝒯 A x
 
--- The interior is a subset of the original set
+def interior (𝒯: Set (Set X)) (A: Set X): Set X :=
+ {x | interior_point 𝒯 A x}
+
+-- Interior is monotone: if A ⊆ B then interior(A) ⊆ interior(B)
+theorem interior_monotone (𝒯: Set (Set X)) {A B: Set X} (h: A ⊆ B): interior 𝒯 A ⊆ interior 𝒯 B := by
+  simp [interior, interior_point]
+  intro x hx
+  exact neighborhood_upward_closed x hx h
+
+-- Interior of the empty set is empty
+theorem interior_empty (𝒯: Set (Set X)): interior 𝒯 ∅ = ∅ := by
+  simp [interior, neighborhood, interior_point]
+
+-- Interior of the universe is itself
+theorem interior_univ {𝒯: Set (Set X)} (h: IsTopology 𝒯): interior 𝒯 Set.univ = Set.univ := by
+  apply Set.eq_univ_of_univ_subset
+  intro _ _
+  apply neighborhood_univ h
+
+-- Interior is a subset of the original set
 theorem interior_subset_self (𝒯: Set (Set X)) (A: Set X): interior 𝒯 A ⊆ A := by
   exact fun _ => neighborhood_mem
 
--- The interior is an open set
+-- Interior is idempotent: interior(interior(A)) = interior(A)
+theorem interior_idempotent (𝒯: Set (Set X)) (A: Set X): interior 𝒯 (interior 𝒯 A) = interior 𝒯 A := by
+  apply le_antisymm
+  · apply interior_subset_self
+  · intro _ hx
+    simp_all [interior, interior_point, neighborhood]
+    obtain ⟨U, _, _, _⟩ := hx
+    exists U
+    repeat' constructor; simp_all
+    intro _ _
+    exists U
+
+-- The interior is open
 theorem interior_open (𝒯: Set (Set X)) (A: Set X): interior 𝒯 A ∈ 𝒯 := by
   apply (open_iff_neighborhood_of_all_points 𝒯 (interior 𝒯 A)).mpr
   intro _ hx
@@ -743,15 +949,6 @@ theorem open_iff_eq_interior (𝒯: Set (Set X)) (A: Set X): A ∈ 𝒯 ↔ A = 
     rw [h]
     apply interior_open
 
--- If A ⊆ B then A ⊆ interior B; i.e. interior is monotone.
-theorem interior_monotone (𝒯: Set (Set X)) {A B: Set X} (h: A ⊆ B): interior 𝒯 A ⊆ interior 𝒯 B := by
-  intro x ⟨U, hU₁, hU₂, hU₃⟩
-  exists U
-  repeat' constructor
-  · exact hU₁
-  · exact hU₂
-  · exact le_trans hU₃ h
-
 -- interior (A ∩ B) = interior A ∩ interior B
 theorem interior_inter_eq {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A B: Set X): interior 𝒯 (A ∩ B) = interior 𝒯 A ∩ interior 𝒯 B := by
   ext
@@ -770,20 +967,27 @@ theorem interior_inter_eq {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A B: Set
     · exact hV₂
     · exact Set.inter_subset_inter hU₃ hV₃
 
+-- in the discrete topology, the interior of any set is itself
+theorem discrete_interior (A: Set X): interior Set.univ A = A := by
+  apply le_antisymm
+  · apply interior_subset_self
+  · intro
+    apply (discrete_neighborhood_iff _ _).mpr
+
 def adherent (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
   ∀ N ∈ Nbhds 𝒯 x, N ∩ A ≠ ∅
 
 def closure (𝒯: Set (Set X)) (A: Set X): Set X :=
  {x | adherent 𝒯 A x}
 
--- Duality theorem: closure(A) = interior(Aᶜ)ᶜ
+-- Duality: closure(A) = interior(Aᶜ)ᶜ
 -- Lets us prove results about closure in terms of interior
 -- TODO: this proof is ugly!
 theorem closure_eq (𝒯: Set (Set X)) (A: Set X): closure 𝒯 A = (interior 𝒯 Aᶜ)ᶜ := by
   ext
   constructor
   · intro hx
-    simp_all [interior, neighborhood]
+    simp_all [interior, neighborhood, interior_point]
     intro U h1 h2 h3
     have := hx U (open_neighborhood 𝒯 h2 h1)
     have: U ∩ A = ∅ := by -- this should be easier..
@@ -795,12 +999,30 @@ theorem closure_eq (𝒯: Set (Set X)) (A: Set X): closure 𝒯 A = (interior �
     contradiction
   · intro hx N hN h
     obtain ⟨U, hU₁, hU₂, hU₃⟩ := hN
-    simp_all [interior, neighborhood]
+    simp_all [interior, neighborhood, interior_point]
     apply hx U hU₁ hU₂
     intro _ hz1 hz2
     have := Set.mem_inter (hU₃ hz1) hz2
     rw [h] at this
     contradiction
+
+theorem closure_empty {𝒯: Set (Set X)} (h: IsTopology 𝒯): closure 𝒯 ∅ = ∅ := by
+  simp [closure_eq, interior_univ h]
+
+theorem closure_univ (𝒯: Set (Set X)): closure 𝒯 Set.univ = Set.univ := by
+  simp [closure_eq, interior_empty]
+
+theorem closure_compl_eq_compl_interior (𝒯: Set (Set X)) (A: Set X): closure 𝒯 Aᶜ = (interior 𝒯 A)ᶜ := by
+  simp [closure_eq]
+
+theorem compl_closure_eq_interior_compl (𝒯: Set (Set X)) (A: Set X): (closure 𝒯 A)ᶜ = interior 𝒯 Aᶜ := by
+  simp [closure_eq]
+
+theorem closure_interior (𝒯: Set (Set X)) (A: Set X): closure 𝒯 (interior 𝒯 A) = closure 𝒯 A := by
+  sorry
+
+theorem closure_idempotent (𝒯: Set (Set X)) (A: Set X): closure 𝒯 (closure 𝒯 A) = closure 𝒯 A := by
+  simp [closure_eq, interior_idempotent]
 
 -- the closure is closed
 theorem closure_closed (𝒯: Set (Set X)) (A: Set X): closedset 𝒯 (closure 𝒯 A) := by
@@ -841,11 +1063,104 @@ theorem closure_union_eq {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A B: Set 
   simp
   apply interior_inter_eq h𝒯
 
+-- in the discrete topology, the closure of any set is itself
+theorem discrete_closure (A: Set X): closure Set.univ A = A := by
+  simp [closure_eq, discrete_interior]
+
+-- the frontier, aka boundary
+def frontier_point (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
+  ∀ N ∈ Nbhds 𝒯 x, N ∩ A ≠ ∅ ∧ N ∩ Aᶜ ≠ ∅
+
+def frontier (𝒯: Set (Set X)) (A: Set X): Set X :=
+  {x | frontier_point 𝒯 A x}
+
+theorem frontier_eq (𝒯: Set (Set X)) (A: Set X): frontier 𝒯 A = closure 𝒯 A ∩ closure 𝒯 Aᶜ := by
+  simp [frontier, frontier_point, closure, adherent]
+  ext
+  exact forall₂_and
+
+-- the frontier of the closure is the same as the frontier
+theorem frontier_closure_eq (𝒯: Set (Set X)) (A: Set X): frontier 𝒯 (closure 𝒯 A) = frontier 𝒯 A := by
+  calc
+    frontier 𝒯 (closure 𝒯 A) = closure 𝒯 (closure 𝒯 A) ∩ closure 𝒯 (closure 𝒯 A)ᶜ := by rw [frontier_eq]
+                           _ = closure 𝒯 A ∩ closure 𝒯 (closure 𝒯 A)ᶜ := by rw [closure_idempotent]
+                           _ = closure 𝒯 A ∩ closure 𝒯 (interior 𝒯 Aᶜ) := by rw [compl_closure_eq_interior_compl]
+                           _ = closure 𝒯 A ∩ closure 𝒯 Aᶜ := by sorry
+                           _ = frontier 𝒯 A := by rw [frontier_eq]
+
+theorem frontier_closed (𝒯: Set (Set X)) (A: Set X): closedset 𝒯 (frontier 𝒯 A) := by
+  sorry
+
+-- TODO: is basic neighborhood worth defining?
+theorem frontier_mem_iff {𝒯 ℬ: Set (Set X)} (h: base 𝒯 ℬ) (A: Set X) (x: X): x ∈ frontier 𝒯 A ↔ ∀ N ∈ Nbhds 𝒯 x ∩ ℬ, N ∩ A = ∅ ∧ N ∩ Aᶜ = ∅ := by
+  sorry
+
+theorem frontier_univ {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): frontier 𝒯 Set.univ = ∅ := by
+  simp [frontier_eq, closure_empty h𝒯]
+
+theorem frontier_empty {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): frontier 𝒯 ∅ = ∅ := by
+  simp [frontier_eq, closure_empty h𝒯]
+
+-- in a metric space, the frontier of the open ball is the sphere
+theorem frontier_openball {d: X → X → ℝ} (hd: IsMetric d) (x: X) (r: ℝ): frontier (metric_opensets d) (openball d x r) = sphere d x r := by
+  sorry
+
+-- in the discrete topology, the frontier of every set is empty
+theorem discrete_frontier (A: Set X): frontier Set.univ A = ∅ := by
+  simp [frontier_eq, discrete_closure]
+
+def exterior_point (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
+  x ∈ interior 𝒯 Aᶜ
+
+def exterior (𝒯: Set (Set X)) (A: Set X): Set X :=
+  {x | exterior_point 𝒯 A x}
+
+theorem exterior_eq (𝒯: Set (Set X)) (A: Set X): exterior 𝒯 A = (closure 𝒯 A)ᶜ := by
+  simp [exterior, exterior_point, compl_closure_eq_interior_compl]
+
+-- TODO this is clunky
+-- the interior, frontier, and exterior form a disjoint union of the whole space.
+theorem interior_frontier_exterior_partition (𝒯: Set (Set X)) (A: Set X):
+  (interior 𝒯 A ∪ frontier 𝒯 A ∪ exterior 𝒯 A = X) ∧ (interior 𝒯 A ∩ frontier 𝒯 A = ∅) ∧ (interior 𝒯 A ∩ exterior 𝒯 A = ∅) ∧ (frontier 𝒯 A ∩ exterior 𝒯 A = ∅) := by
+  repeat' constructor
+  · sorry
+  · sorry
+  · sorry
+  · sorry
+
+-- in the discrete topology, the exterior of a set is its complement
+theorem discrete_exterior (𝒯: Set (Set X)) (A: Set X): exterior Set.univ A = Aᶜ := by
+  simp [exterior_eq, closure_eq, discrete_interior]
+
+-- a family 𝒯 is Hausdorff (aka T2) if every pair of distinct points have disjoint neighborhoods.
 def Hausdorff (𝒯: Set (Set X)): Prop :=
   ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ Disjoint U V
 
+-- the discrete topology is hausdorff
+theorem discrete_hausdorff (X: Type*): Hausdorff (@Set.univ (Set X)) := by
+  intro x y h
+  exists {x}, {y}
+  repeat' (apply And.intro)
+  · exact (discrete_neighborhood_iff {x} x).mpr rfl
+  · exact (discrete_neighborhood_iff {y} y).mpr rfl
+  · exact Set.disjoint_singleton.mpr h
+
+-- If X has more than 1 point, the indiscrete topology is nonhausdorff
+theorem indiscrete_nonhausdorff {X: Type*} {x y: X} (h: x ≠ y): ¬ Hausdorff {∅, @Set.univ X} := by
+  simp [Hausdorff]
+  exists x, y
+  constructor
+  exact h
+  intro U hU
+  simp_all [Nbhds, neighborhood]
+  exact Nonempty.intro x
+
+-- the indiscrete space is Hausdorff iff. X has one point
+theorem indiscrete_nonhausdorff_iff (X: Type*): Hausdorff {∅, @Set.univ X} ↔ ∀ x y: X, x = y := by
+  sorry
+
 -- Sierpiński space is non-Hausdorff
-theorem sierpiński_not_hausdorff: ¬Hausdorff (sierpiński_topology.opensets) := by
+theorem sierpiński_nonhausdorff: ¬Hausdorff (sierpiński_topology.opensets) := by
   apply not_forall.mpr
   exists true
   apply not_forall.mpr
@@ -903,4 +1218,4 @@ theorem nonhausdorff_nonmetrizable {𝒯: Topology X} (h: ¬ Hausdorff 𝒯.open
 
 -- corollary: sierpiński space is nonmetrizable!
 theorem sierpiński_nonmetrizable: ¬ metrizable sierpiński_topology := by
-  exact nonhausdorff_nonmetrizable sierpiński_not_hausdorff
+  exact nonhausdorff_nonmetrizable sierpiński_nonhausdorff
