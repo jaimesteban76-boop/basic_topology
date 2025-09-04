@@ -7,4 +7,4 @@ View on Lean 4 web server:
 - [Link to main file](https://live.lean-lang.org/#url=https://github.com/mdnestor/basic_topology/blob/master/basic_topology/basic.lean) (slow)
 - [Link to exercises](https://live.lean-lang.org/#url=https://github.com/mdnestor/basic_topology/blob/master/basic_topology/exercise.lean)
 
-![](https://upload.wikimedia.org/wikipedia/commons/b/b8/Path-connected_space.svg)
+![](https://upload.wikimedia.org/wikipedia/commons/e/e1/Runge_theorem.svg)
