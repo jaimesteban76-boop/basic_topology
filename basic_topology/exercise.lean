@@ -239,12 +239,8 @@ theorem seq_union_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A: ℕ → 
   sorry
 
 -- theorem: finite intersection property is equivalent to binary intersections plus whole set
-theorem finite_inter_iff (𝒯: Set (Set X)): (∀ 𝒰 ⊆ 𝒯, Finite 𝒰 → ⋂₀ 𝒰 ∈ 𝒯) ↔ (Set.univ ∈ 𝒯) ∧ (∀ A ∈ 𝒯, ∀ B ∈ 𝒯, A ∩ B ∈ 𝒯) := by
-  sorry
-
--- some results about closed sets
--- arbitrary intersection closed
-
+ theorem finite_inter_iff (T: Set (Set X)): (∀ U ⊆ T, U.Finite → ⋂₀ U ∈ T) ↔ Set.univ ∈ T ∧ ∀ A ∈ T, ∀ B ∈ T, A ∩ B ∈ T := by
+   sorry
 
 def openset (𝒯: Set (Set X)) (A: Set X): Prop :=
   A ∈ 𝒯
