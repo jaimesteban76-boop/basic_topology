@@ -419,26 +419,27 @@ theorem seq_union_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A: ℕ → 
   exact Set.range_subset_iff.mpr h
 
 -- theorem: finite intersection property is equivalent to binary intersections plus whole set
-theorem finite_inter_iff (𝒯: Set (Set X)): (∀ 𝒰 ⊆ 𝒯, Finite 𝒰 → ⋂₀ 𝒰 ∈ 𝒯) ↔ (Set.univ ∈ 𝒯) ∧ (∀ A ∈ 𝒯, ∀ B ∈ 𝒯, A ∩ B ∈ 𝒯) := by
+ theorem finite_inter_iff (T: Set (Set X)): (∀ U ⊆ T, U.Finite → ⋂₀ U ∈ T) ↔ Set.univ ∈ T ∧ ∀ A ∈ T, ∀ B ∈ T, A ∩ B ∈ T := by
   constructor
   · intro h
     constructor
-    · have: @Set.univ X = ⋂₀ ∅ := by ext; simp
-      rw [this]
+    · rw [←Set.sInter_empty]
       apply h
-      · exact Set.empty_subset 𝒯
-      · exact Finite.of_subsingleton
-    · intro A hA B hB
-      have: A ∩ B = ⋂₀ {A, B} := by ext; simp
-      rw [this]
+      · apply Set.empty_subset
+      · exact Set.finite_empty
+    · intro _ hA _ hB
+      rw [(Set.sInter_pair _ _).symm]
       apply h
       · exact Set.pair_subset hA hB
-      · exact Finite.Set.finite_insert A {B}
-  · sorry -- by induction, hard
-
--- some results about closed sets
--- arbitrary intersection closed
-
+      · apply Set.toFinite
+  intro ⟨_, hAB⟩ _ hU1 hU2
+  refine Set.Finite.induction_on_subset _ hU2 ?empty ?insert
+  · simp_all
+  · intro _ _ hS _ _ ih
+    rw [Set.sInter_insert]
+    apply hAB
+    · exact hU1 hS
+    · exact ih
 
 def openset (𝒯: Set (Set X)) (A: Set X): Prop :=
   A ∈ 𝒯
