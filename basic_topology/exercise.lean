@@ -752,7 +752,8 @@ theorem frechet_iff' (T: Set (Set X)): fréchet T ↔ ∀ x, {x} = Set.sInter (N
 def subspace_topology (T: Set (Set X)) (A: Set X): Set (Set X) :=
   {A ∩ U | U ∈ T}
 
--- def subspace_topology_is_topology (T: Set (Set X)) (A: Set X) (hT: IsTopology T): IsTopology
+theorem subspace_topology_is_topology (T: Set (Set X)) (A: Set X) (hT: IsTopology T): IsTopology (subspace_topology T A) := by
+  sorry
 
 -- basis of a subspace
 
@@ -783,15 +784,26 @@ structure homeomorphism {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X �
 def homeomorphic {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)): Prop :=
   ∃ f, homeomorphism TX TY f
 
+-- this definition doesn't care about underlying type of points
+def homeomorphic_spaces (X Y: TopologicalSpace): Prop :=
+  ∃ f: X.points → Y.points, homeomorphism X.topology.opensets Y.topology.opensets f
+
+-- a property is called a topological property if it's preserved under homeomorphism
+def topological_property (P: TopologicalSpace → Prop): Prop :=
+  ∀ X Y: TopologicalSpace, homeomorphic_spaces X Y → P X → P Y
+
 def connected (T: Set (Set X)): Prop :=
   ∀ U V: Set X, U ∈ T → V ∈ T → U.Nonempty → V.Nonempty → U ∪ V = Set.univ → (U ∩ V).Nonempty
 
--- a property is called a topological property if it's preserved under homeomorphism
--- how to define this?
+def connected_space (X: TopologicalSpace): Prop :=
+  connected X.topology.opensets
+
+-- connectedness is a topological property
+theorem connected_topological_property: topological_property connected_space := by
+  sorry
+
 
 -- let f: X → Y be a homeomorphism. Then f induces a homeomorphism X \ A -> Y \ f(A)
--- or maybe homeomorphism subspace...
-
 
 -- limit of a sequence
 def limit (T: Set (Set X)) (x: Nat → X) (l: X): Prop :=
@@ -800,7 +812,8 @@ def limit (T: Set (Set X)) (x: Nat → X) (l: X): Prop :=
 def adherent_value (T: Set (Set X)) (x: Nat → X) (a: X): Prop :=
   ∀ N ∈ Nbhds T a, ∀ n0: Nat, ∃ n: Nat, n0 ≤ n ∧ x n ∈ N
 
--- defn of a subsequence?
+-- defn of a subsequence
+
 -- a is adherent iff exists subsequence converging to a
 
 -- limits are unique in a hausdorff space
