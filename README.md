@@ -1,4 +1,4 @@
-Some basic point-set topology in Lean for fun.
+Some basic point-set topology in Lean for fun. It is roughly based on General Topology by Stephen Willard (1970).
 
 The main file is `basic.lean` and there is also an automatically generated file called `exercise.lean` with proofs of theorems removed if you want to try yourself :)
 
