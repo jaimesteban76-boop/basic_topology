@@ -226,15 +226,7 @@ theorem openball_mem_smaller_ball {d: X → X → ℝ} (hd: IsMetric d) {x x0: X
 
 -- If x0 ∈ C(x, r)ᶜ and s = r - d(x, x0) then B(x0, s) ⊆ C(x, r)ᶜ
 theorem closedball_compl_mem {d: X → X → ℝ} (hd: IsMetric d) {x x0: X} {r: ℝ} (hx0: x0 ∈ (closedball d x r)ᶜ): openball d x0 (d x x0 - r) ⊆ (closedball d x r)ᶜ := by
-  intro z hz
-  simp_all [closedball]
-  calc
-    r = r + r - r             := by exact Eq.symm (add_sub_cancel_right r r)
-    _ < d x x0 + d x x0 - r   := by sorry
-    _ = d x x0 - (r - d x x0) := by exact Eq.symm (sub_sub_eq_add_sub (d x x0) r (d x x0))
-    _ ≤ d x x0 - d x0 z       := by sorry
-    _ ≤ |d x x0 - d x0 z|     := by exact le_abs_self (d x x0 - d x0 z)
-    _ ≤ d x z                 := by exact reverse_triangle_inequality hd x x0 z
+  sorry
 
 -- definition of an open set in a metric space
 -- we will give them the prefix `metric_` since we need these names later
@@ -426,19 +418,6 @@ theorem seq_union_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A: ℕ → 
   apply h𝒯.sUnion
   exact Set.range_subset_iff.mpr h
 
-def openset (𝒯: Set (Set X)) (A: Set X): Prop :=
-  A ∈ 𝒯
-
-def closedset (𝒯: Set (Set X)) (A: Set X): Prop :=
-  Aᶜ ∈ 𝒯
-
-def clopenset (𝒯: Set (Set X)) (A: Set X): Prop :=
-  openset 𝒯 A ∧ closedset 𝒯 A
-
--- pointless definition but sometimes feels right
-def opensets (𝒯: Set (Set X)): Set (Set X) :=
-  𝒯
-
 -- theorem: finite intersection property is equivalent to binary intersections plus whole set
 theorem finite_inter_iff (𝒯: Set (Set X)): (∀ 𝒰 ⊆ 𝒯, Finite 𝒰 → ⋂₀ 𝒰 ∈ 𝒯) ↔ (Set.univ ∈ 𝒯) ∧ (∀ A ∈ 𝒯, ∀ B ∈ 𝒯, A ∩ B ∈ 𝒯) := by
   constructor
@@ -456,6 +435,45 @@ theorem finite_inter_iff (𝒯: Set (Set X)): (∀ 𝒰 ⊆ 𝒯, Finite 𝒰 �
       · exact Set.pair_subset hA hB
       · exact Finite.Set.finite_insert A {B}
   · sorry -- by induction, hard
+
+-- some results about closed sets
+-- arbitrary intersection closed
+
+
+def openset (𝒯: Set (Set X)) (A: Set X): Prop :=
+  A ∈ 𝒯
+
+def closedset (𝒯: Set (Set X)) (A: Set X): Prop :=
+  Aᶜ ∈ 𝒯
+
+def clopenset (𝒯: Set (Set X)) (A: Set X): Prop :=
+  openset 𝒯 A ∧ closedset 𝒯 A
+
+-- pointless definition but sometimes feels right
+def opensets (𝒯: Set (Set X)): Set (Set X) :=
+  𝒯
+
+def closedsets (𝒯: Set (Set X)): Set (Set X) :=
+  {A | closedset 𝒯 A}
+
+def clopensets (𝒯: Set (Set X)): Set (Set X) :=
+  opensets 𝒯 ∩ closedsets 𝒯
+
+theorem closedset_sInter {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ closedsets 𝒯, ⋂₀ 𝒰 ∈ closedsets 𝒯 := by
+  sorry
+
+theorem closedset_finite_sUnion {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ closedsets 𝒯, Finite 𝒰 → ⋃₀ 𝒰 ∈ closedsets 𝒯 := by
+  sorry
+
+theorem binary_union_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: closedset 𝒯 A) (hB: closedset 𝒯 B): closedset 𝒯 (A ∪ B) := by
+  sorry
+
+theorem binary_inter_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: closedset 𝒯 A) (hB: closedset 𝒯 B): closedset 𝒯 (A ∩ B) := by
+  sorry
+
+-- The union of a sequence of open sets is open
+theorem seq_inter_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, closedset 𝒯 (A n)): closedset 𝒯 (Set.iInter A) := by
+  sorry
 
 -- the set of all subsets is a topology, aka the discrete topology
 theorem discrete_is_topology (X: Type*): IsTopology (@Set.univ (Set X)) := {
@@ -790,14 +808,27 @@ theorem open_neighborhood (𝒯: Set (Set X)) {U: Set X} {x: X} (h1: x ∈ U) (h
   exists U
 
 -- A set is open iff. it is a neighborhood of all its points.
-theorem open_iff_neighborhood_of_all_points (𝒯: Set (Set X)) (A: Set X): A ∈ 𝒯 ↔ ∀ x ∈ A, neighborhood 𝒯 A x := by
-  apply Iff.intro
-  · intro h x hx
+theorem open_iff_neighborhood_of_all_points (𝒯: Set (Set X)) (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ ∀ x ∈ A, neighborhood 𝒯 A x := by
+  constructor
+  · intro hA x hx
     exists A
   · intro h
-    let U := fun x: A => Classical.choose (h x.val x.property)
-    -- need to show A is equal to the union of U
-    sorry
+    have : A = ⋃₀ {U | ∃ x ∈ A, U ∈ 𝒯 ∧ x ∈ U ∧ U ⊆ A} := by
+      ext y
+      constructor
+      · intro hy
+        rcases h y hy with ⟨U, hU, hyU, hUA⟩
+        refine Set.mem_sUnion.mpr ⟨U, ?_, hyU⟩
+        exact ⟨y, hy, hU, hyU, hUA⟩
+      · intro hy
+        rcases Set.mem_sUnion.mp hy with ⟨U, ⟨x, hxA, hU, hxU, hUA⟩, hyU⟩
+        exact hUA hyU
+    rw [this]
+    apply h𝒯.sUnion
+    intro U hU
+    rcases hU with ⟨x,hx⟩
+    rcases hx with ⟨h1,h2,h3⟩
+    exact h2
 
 -- In the discrete topology, N is a neighborhood of x iff x ∈ N.
 theorem discrete_neighborhood_iff {X: Type*} (N: Set X) (x: X): neighborhood Set.univ N x ↔ x ∈ N := by
@@ -925,7 +956,12 @@ theorem interior_open (𝒯: Set (Set X)) (A: Set X): interior 𝒯 A ∈ 𝒯 :
 
 -- The interior of A is largest open subset of A
 theorem interior_largest_open_subset {𝒯: Set (Set X)} {A U: Set X} (h1: U ∈ 𝒯) (h2: U ⊆ A): U ⊆ interior 𝒯 A := by
-  sorry
+  rw[interior]
+  intro y hy
+  refine Set.mem_setOf.mpr ?_
+  rw[interior_point]
+  rw[neighborhood]
+  use U
 
 -- The interior of A is the union of all open subsets of A.
 -- (Is this proof beautiful or ugly?)
@@ -975,7 +1011,7 @@ theorem discrete_interior (A: Set X): interior Set.univ A = A := by
     apply (discrete_neighborhood_iff _ _).mpr
 
 def adherent (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
-  ∀ N ∈ Nbhds 𝒯 x, N ∩ A ≠ ∅
+  ∀ N ∈ Nbhds 𝒯 x, Set.Nonempty (N ∩ A)
 
 def closure (𝒯: Set (Set X)) (A: Set X): Set X :=
  {x | adherent 𝒯 A x}
@@ -996,15 +1032,16 @@ theorem closure_eq (𝒯: Set (Set X)) (A: Set X): closure 𝒯 A = (interior �
       · intro ⟨hz1, hz2⟩
         exact h3 hz1 hz2
       · exact False.elim
-    contradiction
-  · intro hx N hN h
-    obtain ⟨U, hU₁, hU₂, hU₃⟩ := hN
-    simp_all [interior, neighborhood, interior_point]
-    apply hx U hU₁ hU₂
-    intro _ hz1 hz2
-    have := Set.mem_inter (hU₃ hz1) hz2
-    rw [h] at this
-    contradiction
+    sorry -- contradiction
+  · sorry
+    -- intro hx N hN h
+    -- obtain ⟨U, hU₁, hU₂, hU₃⟩ := hN
+    -- simp_all [interior, neighborhood, interior_point]
+    -- apply hx U hU₁ hU₂
+    -- intro _ hz1 hz2
+    -- have := Set.mem_inter (hU₃ hz1) hz2
+    -- rw [h] at this
+    -- contradiction
 
 theorem closure_empty {𝒯: Set (Set X)} (h: IsTopology 𝒯): closure 𝒯 ∅ = ∅ := by
   simp [closure_eq, interior_univ h]
@@ -1018,8 +1055,18 @@ theorem closure_compl_eq_compl_interior (𝒯: Set (Set X)) (A: Set X): closure 
 theorem compl_closure_eq_interior_compl (𝒯: Set (Set X)) (A: Set X): (closure 𝒯 A)ᶜ = interior 𝒯 Aᶜ := by
   simp [closure_eq]
 
-theorem closure_interior (𝒯: Set (Set X)) (A: Set X): closure 𝒯 (interior 𝒯 A) = closure 𝒯 A := by
-  sorry
+theorem closure_monotone (𝒯: Set (Set X)) (A B: Set X){h:A⊆ B}: closure 𝒯 A ⊆ closure 𝒯 B := by
+simp[closure, adherent]
+intro x hx
+intro U hU
+apply hx at hU
+have h1: U ∩ A ⊆ U ∩ B := by
+  exact Set.inter_subset_inter (fun ⦃a⦄ a ↦ a) h
+exact Set.Nonempty.mono h1 hU
+
+theorem closure_interior (𝒯: Set (Set X)) (A: Set X): closure 𝒯 (interior 𝒯 A) ⊆ closure 𝒯 A := by
+  apply closure_monotone
+  apply interior_subset_self
 
 theorem closure_idempotent (𝒯: Set (Set X)) (A: Set X): closure 𝒯 (closure 𝒯 A) = closure 𝒯 A := by
   simp [closure_eq, interior_idempotent]
@@ -1069,7 +1116,7 @@ theorem discrete_closure (A: Set X): closure Set.univ A = A := by
 
 -- the frontier, aka boundary
 def frontier_point (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
-  ∀ N ∈ Nbhds 𝒯 x, N ∩ A ≠ ∅ ∧ N ∩ Aᶜ ≠ ∅
+  ∀ N ∈ Nbhds 𝒯 x, Set.Nonempty (N ∩ A) ∧ Set.Nonempty (N ∩ Aᶜ)
 
 def frontier (𝒯: Set (Set X)) (A: Set X): Set X :=
   {x | frontier_point 𝒯 A x}
@@ -1132,12 +1179,99 @@ theorem interior_frontier_exterior_partition (𝒯: Set (Set X)) (A: Set X):
 theorem discrete_exterior (𝒯: Set (Set X)) (A: Set X): exterior Set.univ A = Aᶜ := by
   simp [exterior_eq, closure_eq, discrete_interior]
 
--- a family 𝒯 is Hausdorff (aka T2) if every pair of distinct points have disjoint neighborhoods.
-def Hausdorff (𝒯: Set (Set X)): Prop :=
-  ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ Disjoint U V
+theorem closure_eq_interior_union_frontier (𝒯: Set (Set X)) (A: Set X): closure 𝒯 A = interior 𝒯 A ∪ frontier 𝒯 A := by
+  sorry
+
+theorem interior_eq_set_minus_frontier (𝒯: Set (Set X)) (A: Set X): interior 𝒯 A = A \ frontier 𝒯 A := by
+  sorry
+
+def dense (𝒯: Set (Set X)) (A: Set X): Prop :=
+  ∀ U ∈ 𝒯, Set.Nonempty U → Set.Nonempty (A ∩ U)
+
+theorem dense_univ (𝒯: Set (Set X)): dense 𝒯 Set.univ := by
+  simp [dense]
+
+theorem dense_iff_dense_in_base (𝒯 ℬ: Set (Set X)) (h: base 𝒯 ℬ) (A: Set X): dense 𝒯 A ↔ ∀ U ∈ ℬ, Set.Nonempty U → Set.Nonempty (A ∩ U) := by
+  sorry
+
+-- some theorems ? Q is dense, I is dense, is C is countable then Cᶜ is dense
+
+theorem discrete_dense_iff (A: Set X): dense Set.univ A ↔ A = Set.univ := by
+  constructor
+  · intro h
+    apply Set.eq_univ_of_univ_subset
+    intro x _
+    simp [dense] at h
+    exact Set.inter_singleton_nonempty.mp (h {x} (by exists x))
+  · intro h
+    rw [h]
+    apply dense_univ
+
+theorem indiscrete_dense (A: Set X): Set.Nonempty A → dense {∅, Set.univ} A := by
+  intro h
+  simp [dense]
+  intro--
+  exact h
+
+-- theorem : dense in euclidean topology iff. dense in sorgenfry
+theorem dense_iff (𝒯: Set (Set X)) (A: Set X): dense 𝒯 A ↔ closure 𝒯 A = Set.univ := by
+  constructor
+  · intro h
+    apply Set.eq_univ_of_univ_subset
+    intro x _
+    simp_all [closure, adherent, dense]
+    intro N hN
+    simp_all [Nbhds, neighborhood]
+    obtain ⟨U, hU1, hU2, hU3⟩ := hN
+    have := h U hU1 (by exists x)
+    rw [Set.inter_comm]
+    exact Set.Nonempty.mono (Set.inter_subset_inter (fun ⦃a⦄ a ↦ a) hU3) this
+  · intro h
+    simp [dense]
+    intro U hU1 hU2
+    simp_all [closure, adherent]
+    obtain ⟨x, hx⟩ := hU2
+    have: x ∈ Set.univ := by exact trivial
+    rw [←h] at this
+    simp at this
+    have: ∀ N ∈ Nbhds 𝒯 x, (N ∩ A).Nonempty := this
+    have: U ∈ Nbhds 𝒯 x := by
+      simp [Nbhds]
+      exact open_neighborhood 𝒯 hx hU1
+    rw [Set.inter_comm]
+    (expose_names; exact this_1 U this)
+
+theorem dense_antimono {𝒯₁ 𝒯₂: Set (Set X)} (h1: 𝒯₁ ⊆ 𝒯₂) {A: Set X} (h2: dense 𝒯₂ A): dense 𝒯₁ A := by
+  intro U hU1
+  exact h2 U (h1 hU1)
+
+-- example: Z is dense in the topology generated by [a,infty)
+
+-- fréchet and hausdorff spaces
+def fréchet (𝒯: Set (Set X)): Prop :=
+  ∀ x y, x ≠ y → ∃ U ∈ Nbhds 𝒯 x, ∃ V ∈ Nbhds 𝒯 y, x ∉ V ∧ y ∉ U
+
+-- a family 𝒯 is hausdorff (aka T2) if every pair of distinct points have disjoint neighborhoods.
+def hausdorff (𝒯: Set (Set X)): Prop :=
+  ∀ x y, x ≠ y → ∃ U ∈ Nbhds 𝒯 x, ∃ V ∈ Nbhds 𝒯 y, Disjoint U V
+
+theorem fréchet_implies_hausdorff (𝒯: Set (Set X)): hausdorff 𝒯 → fréchet 𝒯 := by
+  intro h
+  intro x y h1
+  have := h x y h1
+  obtain ⟨U, hU1, ⟨V, hV1, h2⟩⟩ := h x y h1
+  exists U
+  constructor
+  · exact hU1
+  · exists V
+    constructor
+    · exact hV1
+    · constructor
+      · exact Disjoint.notMem_of_mem_left h2 (neighborhood_mem hU1)
+      · exact Disjoint.notMem_of_mem_left (id (Disjoint.symm h2)) (neighborhood_mem hV1)
 
 -- the discrete topology is hausdorff
-theorem discrete_hausdorff (X: Type*): Hausdorff (@Set.univ (Set X)) := by
+theorem discrete_hausdorff (X: Type*): hausdorff (@Set.univ (Set X)) := by
   intro x y h
   exists {x}, {y}
   repeat' (apply And.intro)
@@ -1146,8 +1280,8 @@ theorem discrete_hausdorff (X: Type*): Hausdorff (@Set.univ (Set X)) := by
   · exact Set.disjoint_singleton.mpr h
 
 -- If X has more than 1 point, the indiscrete topology is nonhausdorff
-theorem indiscrete_nonhausdorff {X: Type*} {x y: X} (h: x ≠ y): ¬ Hausdorff {∅, @Set.univ X} := by
-  simp [Hausdorff]
+theorem indiscrete_nonhausdorff {X: Type*} {x y: X} (h: x ≠ y): ¬ hausdorff {∅, @Set.univ X} := by
+  simp [hausdorff]
   exists x, y
   constructor
   exact h
@@ -1155,12 +1289,12 @@ theorem indiscrete_nonhausdorff {X: Type*} {x y: X} (h: x ≠ y): ¬ Hausdorff {
   simp_all [Nbhds, neighborhood]
   exact Nonempty.intro x
 
--- the indiscrete space is Hausdorff iff. X has one point
-theorem indiscrete_nonhausdorff_iff (X: Type*): Hausdorff {∅, @Set.univ X} ↔ ∀ x y: X, x = y := by
+-- the indiscrete space is hausdorff iff. X has one point
+theorem indiscrete_nonhausdorff_iff (X: Type*): hausdorff {∅, @Set.univ X} ↔ ∀ x y: X, x = y := by
   sorry
 
--- Sierpiński space is non-Hausdorff
-theorem sierpiński_nonhausdorff: ¬Hausdorff (sierpiński_topology.opensets) := by
+-- Sierpiński space is non-hausdorff
+theorem sierpiński_nonhausdorff: ¬hausdorff (sierpiński_topology.opensets) := by
   apply not_forall.mpr
   exists true
   apply not_forall.mpr
@@ -1197,9 +1331,9 @@ lemma separated_balls {d: X → X → ℝ} (hd: IsMetric d) {x1 x2: X} {r1 r2: �
           _ = d x1 x + d x2 x := by rw [hd.symm x x2]
           _ < r1 + r2 := by exact add_lt_add hx1 hx2
 
--- Every metric space is Hausdorff.
+-- Every metric space is hausdorff.
 -- Proof: given two distinct points x, y, let r = d(x, y) / 2. Then B(x, r) and B(y, r) are disjoint neighborhoods.
-theorem metric_space_hausdorff {d: X → X → ℝ} (hd: IsMetric d): Hausdorff (metric_opensets d) := by
+theorem metric_space_hausdorff {d: X → X → ℝ} (hd: IsMetric d): hausdorff (metric_opensets d) := by
   intro x y neq
   let r := d x y / 2
   have r_pos := half_pos ((neq_dist_pos hd x y).mp neq)
@@ -1210,8 +1344,8 @@ theorem metric_space_hausdorff {d: X → X → ℝ} (hd: IsMetric d): Hausdorff 
   · apply separated_balls hd
     simp [add_halves, r]
 
--- If a space is not Hausdorff, it is not metrizable
-theorem nonhausdorff_nonmetrizable {𝒯: Topology X} (h: ¬ Hausdorff 𝒯.opensets): ¬ metrizable 𝒯 := by
+-- If a space is not hausdorff, it is not metrizable
+theorem nonhausdorff_nonmetrizable {𝒯: Topology X} (h: ¬ hausdorff 𝒯.opensets): ¬ metrizable 𝒯 := by
   intro ⟨d, hd⟩
   rw [←hd] at h
   exact h (metric_space_hausdorff d.is_metric)
@@ -1219,3 +1353,86 @@ theorem nonhausdorff_nonmetrizable {𝒯: Topology X} (h: ¬ Hausdorff 𝒯.open
 -- corollary: sierpiński space is nonmetrizable!
 theorem sierpiński_nonmetrizable: ¬ metrizable sierpiński_topology := by
   exact nonhausdorff_nonmetrizable sierpiński_nonhausdorff
+
+-- TODO
+-- show the cofinite topology is Frechet but not Hausdorff
+-- the antidiscrete space is not frechte
+-- Let O1, O2 be topologies. If O1 ⊆ O2 then O1 (Hausdorff/Frechet) implies O2 (Hausdorff/Frechet)
+
+theorem frechet_iff (𝒯: Set (Set X)): fréchet 𝒯 ↔ ∀ x, closedset 𝒯 {x} := by
+  sorry
+
+-- show topology generated by [a, infty) is Frechet but not Hausdorff
+-- we can call this the LCRI topology (left closed right infinite) or maybe just OI
+def LCRI_base: Set (Set ℝ) :=
+  ⋃ (a: ℝ), {Set.Ici a}
+
+theorem LCRI_base_is_base: is_base LCRI_base := by
+  sorry
+
+theorem frechet_iff' (T: Set (Set X)): fréchet T ↔ ∀ x, {x} = Set.sInter (Nbhds T x) := by
+  sorry
+
+def subspace_topology (T: Set (Set X)) (A: Set X): Set (Set X) :=
+  {A ∩ U | U ∈ T}
+
+-- def subspace_topology_is_topology (T: Set (Set X)) (A: Set X) (hT: IsTopology T): IsTopology
+
+-- basis of a subspace
+
+-- properties of topologies of metric spaces
+
+-- product topology
+
+-- equivalence of metrics
+
+-- diagonal is closed iff hausdorff
+
+-- continuity
+def continuous_at {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y) (x: X): Prop :=
+  ∀ N' ∈ Nbhds TY (f x), ∃ N ∈ Nbhds TX x, f '' N ⊆ N'
+
+def continuous {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): Prop :=
+  ∀ x, continuous_at TX TY f x
+
+noncomputable def Function.Inverse {X Y: Type} {f: X → Y} (h: Function.Bijective f): Y → X :=
+  Classical.choose (Function.bijective_iff_has_inverse.mp h)
+
+-- homeomorphisms
+structure homeomorphism {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): Prop where
+  bijection: Function.Bijective f
+  continuous_forward: continuous TX TY f
+  continuous_inverse: continuous TY TX (Function.Inverse bijection)
+
+def homeomorphic {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)): Prop :=
+  ∃ f, homeomorphism TX TY f
+
+def connected (T: Set (Set X)): Prop :=
+  ∀ U V: Set X, U ∈ T → V ∈ T → U.Nonempty → V.Nonempty → U ∪ V = Set.univ → (U ∩ V).Nonempty
+
+-- a property is called a topological property if it's preserved under homeomorphism
+-- how to define this?
+
+-- let f: X → Y be a homeomorphism. Then f induces a homeomorphism X \ A -> Y \ f(A)
+-- or maybe homeomorphism subspace...
+
+
+-- limit of a sequence
+def limit (T: Set (Set X)) (x: Nat → X) (l: X): Prop :=
+  ∀ N ∈ Nbhds T l, ∃ n0: Nat, ∀ n: Nat, n0 ≤ n → x n ∈ N
+
+def adherent_value (T: Set (Set X)) (x: Nat → X) (a: X): Prop :=
+  ∀ N ∈ Nbhds T a, ∀ n0: Nat, ∃ n: Nat, n0 ≤ n ∧ x n ∈ N
+
+-- defn of a subsequence?
+-- a is adherent iff exists subsequence converging to a
+
+-- limits are unique in a hausdorff space
+theorem hausdorff_limit_unique (T: Set (Set X)) (h: hausdorff T) (x: Nat → X) (l1 l2: X) (h1: limit T x l1) (h2: limit T x l2): l1 = l2 := by
+  sorry
+
+-- prop: adherent points preserved by sequences
+
+-- the set of adherent values are closed
+
+-- defn of countable/denumerable set
