@@ -1,12 +1,12 @@
-Point-set topology in Lean. Based on General Topology by Stephen Willard (1970).
+Point-set topology in Lean. Based on General Topology by Willard (1970). Authors: Michael Nestor, Jaime Saenz.
 
-Authors: Michael Nestor, Jaime Saenz (University of Louisville).
-
-The main file is `basic.lean` and there is also an automatically generated file called `exercise.lean` with proofs of theorems removed if you want to try yourself :)
+The main file is `basic.lean` and there is also automatically generated `exercises.lean` with proofs removed.
 
 View on Lean 4 web server:
 
-- [Link to main file](https://live.lean-lang.org/#url=https://github.com/mdnestor/basic_topology/blob/master/basic_topology/basic.lean) (slow)
-- [Link to exercises](https://live.lean-lang.org/#url=https://github.com/mdnestor/basic_topology/blob/master/basic_topology/exercise.lean)
+- [Main](https://live.lean-lang.org/#url=https://github.com/mdnestor/basic_topology/blob/master/basic_topology/basic.lean) (slow)
+- [Exercises](https://live.lean-lang.org/#url=https://github.com/mdnestor/basic_topology/blob/master/basic_topology/exercises.lean)
 
-![](https://upload.wikimedia.org/wikipedia/commons/e/e1/Runge_theorem.svg)
+<div align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Runge_theorem.svg" width="50%">
+</div>

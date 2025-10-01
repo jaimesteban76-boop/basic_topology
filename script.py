@@ -25,5 +25,5 @@ if __name__ == "__main__":
     
     exercise = strip_proofs(basic)
     
-    with open("./basic_topology/exercise.lean", "w", encoding="utf-8") as f:
+    with open("./basic_topology/exercises.lean", "w", encoding="utf-8") as f:
         f.writelines(exercise)
