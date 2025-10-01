@@ -809,7 +809,7 @@ theorem open_neighborhood (𝒯: Set (Set X)) {U: Set X} {x: X} (h1: x ∈ U) (h
   exists U
 
 -- A set is open iff. it is a neighborhood of all its points.
-theorem open_iff_neighborhood_of_all_points (𝒯: Set (Set X)) (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ ∀ x ∈ A, neighborhood 𝒯 A x := by
+theorem open_iff_neighborhood_of_all_points {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ ∀ x ∈ A, neighborhood 𝒯 A x := by
   constructor
   · intro hA x hx
     exists A
@@ -944,8 +944,8 @@ theorem interior_idempotent (𝒯: Set (Set X)) (A: Set X): interior 𝒯 (inter
     exists U
 
 -- The interior is open
-theorem interior_open (𝒯: Set (Set X)) (A: Set X): interior 𝒯 A ∈ 𝒯 := by
-  apply (open_iff_neighborhood_of_all_points 𝒯 (interior 𝒯 A)).mpr
+theorem interior_open {𝒯: Set (Set X)} (h: IsTopology 𝒯) (A: Set X): interior 𝒯 A ∈ 𝒯 := by
+  apply (open_iff_neighborhood_of_all_points h (interior 𝒯 A)).mpr
   intro _ hx
   obtain ⟨U, hU₁, hU₂, _⟩ := hx
   exists U
@@ -975,7 +975,7 @@ theorem interior_eq_union_open_subsets {𝒯: Set (Set X)} {A: Set X}: interior 
     exists U
 
 -- A set is open iff. it is its own interior
-theorem open_iff_eq_interior (𝒯: Set (Set X)) (A: Set X): A ∈ 𝒯 ↔ A = interior 𝒯 A := by
+theorem open_iff_eq_interior {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ A = interior 𝒯 A := by
   constructor
   · intro h
     apply Set.Subset.antisymm_iff.mpr
@@ -984,7 +984,8 @@ theorem open_iff_eq_interior (𝒯: Set (Set X)) (A: Set X): A ∈ 𝒯 ↔ A = 
     · apply interior_subset_self
   · intro h
     rw [h]
-    apply interior_open
+    apply interior_open h𝒯
+
 
 -- interior (A ∩ B) = interior A ∩ interior B
 theorem interior_inter_eq {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A B: Set X): interior 𝒯 (A ∩ B) = interior 𝒯 A ∩ interior 𝒯 B := by
@@ -1073,9 +1074,9 @@ theorem closure_idempotent (𝒯: Set (Set X)) (A: Set X): closure 𝒯 (closure
   simp [closure_eq, interior_idempotent]
 
 -- the closure is closed
-theorem closure_closed (𝒯: Set (Set X)) (A: Set X): closedset 𝒯 (closure 𝒯 A) := by
+theorem closure_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): closedset 𝒯 (closure 𝒯 A) := by
   simp [closure_eq, closedset]
-  apply interior_open
+  apply interior_open h𝒯
 
 -- closure is a superset of the original
 theorem closure_supset_self (𝒯: Set (Set X)) (A: Set X): A ⊆ closure 𝒯 A := by
@@ -1097,10 +1098,10 @@ theorem closure_eq_inter_closed_supsets {𝒯: Set (Set X)} {A: Set X}: closure 
   rw [interior_eq_union_open_subsets]
   sorry
 
-theorem closed_iff_eq_closure (𝒯: Set (Set X)) (A: Set X): closedset 𝒯 A ↔ A = closure 𝒯 A := by
+theorem closed_iff_eq_closure {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): closedset 𝒯 A ↔ A = closure 𝒯 A := by
   simp [closure_eq, closedset]
   calc
-    Aᶜ ∈ 𝒯 ↔ Aᶜ  = interior 𝒯 Aᶜ      := by apply open_iff_eq_interior
+    Aᶜ ∈ 𝒯 ↔ Aᶜ  = interior 𝒯 Aᶜ      := by apply open_iff_eq_interior h𝒯
          _ ↔ Aᶜᶜ = (interior 𝒯 Aᶜ)ᶜ   := by apply symm compl_inj_iff
          _ ↔ A   = (interior 𝒯 Aᶜ)ᶜ   := by rw [compl_compl]
 
@@ -1250,26 +1251,21 @@ theorem dense_antimono {𝒯₁ 𝒯₂: Set (Set X)} (h1: 𝒯₁ ⊆ 𝒯₂) 
 
 -- fréchet and hausdorff spaces
 def fréchet (𝒯: Set (Set X)): Prop :=
-  ∀ x y, x ≠ y → ∃ U ∈ Nbhds 𝒯 x, ∃ V ∈ Nbhds 𝒯 y, x ∉ V ∧ y ∉ U
+  ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ x ∉ V ∧ y ∉ U
 
 -- a family 𝒯 is hausdorff (aka T2) if every pair of distinct points have disjoint neighborhoods.
 def hausdorff (𝒯: Set (Set X)): Prop :=
-  ∀ x y, x ≠ y → ∃ U ∈ Nbhds 𝒯 x, ∃ V ∈ Nbhds 𝒯 y, Disjoint U V
+  ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ Disjoint U V
 
 theorem fréchet_implies_hausdorff (𝒯: Set (Set X)): hausdorff 𝒯 → fréchet 𝒯 := by
-  intro h
-  intro x y h1
-  have := h x y h1
-  obtain ⟨U, hU1, ⟨V, hV1, h2⟩⟩ := h x y h1
-  exists U
-  constructor
+  intro h x y h1
+  obtain ⟨U, V, hU1, hV1, h2⟩ := h x y h1
+  exists U, V
+  repeat' (apply And.intro)
   · exact hU1
-  · exists V
-    constructor
-    · exact hV1
-    · constructor
-      · exact Disjoint.notMem_of_mem_left h2 (neighborhood_mem hU1)
-      · exact Disjoint.notMem_of_mem_left (id (Disjoint.symm h2)) (neighborhood_mem hV1)
+  · exact hV1
+  · exact Disjoint.notMem_of_mem_left h2 (neighborhood_mem hU1)
+  · exact Disjoint.notMem_of_mem_left (id (Disjoint.symm h2)) (neighborhood_mem hV1)
 
 -- the discrete topology is hausdorff
 theorem discrete_hausdorff (X: Type*): hausdorff (@Set.univ (Set X)) := by
@@ -1285,10 +1281,10 @@ theorem indiscrete_nonhausdorff {X: Type*} {x y: X} (h: x ≠ y): ¬ hausdorff {
   simp [hausdorff]
   exists x, y
   constructor
-  exact h
-  intro U hU
-  simp_all [Nbhds, neighborhood]
-  exact Nonempty.intro x
+  · exact h
+  · intro U hU
+    simp_all [Nbhds, neighborhood]
+    exact Nonempty.intro x
 
 -- the indiscrete space is hausdorff iff. X has one point
 theorem indiscrete_nonhausdorff_iff (X: Type*): hausdorff {∅, @Set.univ X} ↔ ∀ x y: X, x = y := by
@@ -1389,6 +1385,11 @@ theorem subspace_topology_is_topology (T: Set (Set X)) (A: Set X) (hT: IsTopolog
 -- equivalence of metrics
 
 -- diagonal is closed iff hausdorff
+def diagonal (X: Type u): Set (X × X) :=
+  Set.image (fun x => (x, x)) Set.univ
+
+theorem hausdorff_iff_diagonal_closed (T: Set (Set (X × X))): hausdorff T ↔ closedset T (diagonal X) := by
+  sorry
 
 -- continuity
 def continuous_at {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y) (x: X): Prop :=

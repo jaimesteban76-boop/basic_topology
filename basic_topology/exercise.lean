@@ -426,7 +426,7 @@ theorem open_neighborhood (𝒯: Set (Set X)) {U: Set X} {x: X} (h1: x ∈ U) (h
   sorry
 
 -- A set is open iff. it is a neighborhood of all its points.
-theorem open_iff_neighborhood_of_all_points (𝒯: Set (Set X)) (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ ∀ x ∈ A, neighborhood 𝒯 A x := by
+theorem open_iff_neighborhood_of_all_points {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ ∀ x ∈ A, neighborhood 𝒯 A x := by
   sorry
 
 -- In the discrete topology, N is a neighborhood of x iff x ∈ N.
@@ -505,7 +505,7 @@ theorem interior_idempotent (𝒯: Set (Set X)) (A: Set X): interior 𝒯 (inter
   sorry
 
 -- The interior is open
-theorem interior_open (𝒯: Set (Set X)) (A: Set X): interior 𝒯 A ∈ 𝒯 := by
+theorem interior_open {𝒯: Set (Set X)} (h: IsTopology 𝒯) (A: Set X): interior 𝒯 A ∈ 𝒯 := by
   sorry
 
 -- The interior of A is largest open subset of A
@@ -518,8 +518,9 @@ theorem interior_eq_union_open_subsets {𝒯: Set (Set X)} {A: Set X}: interior 
   sorry
 
 -- A set is open iff. it is its own interior
-theorem open_iff_eq_interior (𝒯: Set (Set X)) (A: Set X): A ∈ 𝒯 ↔ A = interior 𝒯 A := by
+theorem open_iff_eq_interior {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ A = interior 𝒯 A := by
   sorry
+
 
 -- interior (A ∩ B) = interior A ∩ interior B
 theorem interior_inter_eq {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A B: Set X): interior 𝒯 (A ∩ B) = interior 𝒯 A ∩ interior 𝒯 B := by
@@ -563,7 +564,7 @@ theorem closure_idempotent (𝒯: Set (Set X)) (A: Set X): closure 𝒯 (closure
   sorry
 
 -- the closure is closed
-theorem closure_closed (𝒯: Set (Set X)) (A: Set X): closedset 𝒯 (closure 𝒯 A) := by
+theorem closure_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): closedset 𝒯 (closure 𝒯 A) := by
   sorry
 
 -- closure is a superset of the original
@@ -577,7 +578,7 @@ theorem closure_smallest_closed_supset {𝒯: Set (Set X)} {A U: Set X} (h1: U�
 theorem closure_eq_inter_closed_supsets {𝒯: Set (Set X)} {A: Set X}: closure 𝒯 A = ⋂₀ {U | Uᶜ ∈ 𝒯 ∧ A ⊆ U} := by
   sorry
 
-theorem closed_iff_eq_closure (𝒯: Set (Set X)) (A: Set X): closedset 𝒯 A ↔ A = closure 𝒯 A := by
+theorem closed_iff_eq_closure {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): closedset 𝒯 A ↔ A = closure 𝒯 A := by
   sorry
 
 -- closure (A ∪ B) = (closure A) ∪ (closure B)
@@ -680,11 +681,11 @@ theorem dense_antimono {𝒯₁ 𝒯₂: Set (Set X)} (h1: 𝒯₁ ⊆ 𝒯₂) 
 
 -- fréchet and hausdorff spaces
 def fréchet (𝒯: Set (Set X)): Prop :=
-  ∀ x y, x ≠ y → ∃ U ∈ Nbhds 𝒯 x, ∃ V ∈ Nbhds 𝒯 y, x ∉ V ∧ y ∉ U
+  ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ x ∉ V ∧ y ∉ U
 
 -- a family 𝒯 is hausdorff (aka T2) if every pair of distinct points have disjoint neighborhoods.
 def hausdorff (𝒯: Set (Set X)): Prop :=
-  ∀ x y, x ≠ y → ∃ U ∈ Nbhds 𝒯 x, ∃ V ∈ Nbhds 𝒯 y, Disjoint U V
+  ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ Disjoint U V
 
 theorem fréchet_implies_hausdorff (𝒯: Set (Set X)): hausdorff 𝒯 → fréchet 𝒯 := by
   sorry
@@ -760,6 +761,11 @@ theorem subspace_topology_is_topology (T: Set (Set X)) (A: Set X) (hT: IsTopolog
 -- equivalence of metrics
 
 -- diagonal is closed iff hausdorff
+def diagonal (X: Type u): Set (X × X) :=
+  Set.image (fun x => (x, x)) Set.univ
+
+theorem hausdorff_iff_diagonal_closed (T: Set (Set (X × X))): hausdorff T ↔ closedset T (diagonal X) := by
+  sorry
 
 -- continuity
 def continuous_at {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y) (x: X): Prop :=
