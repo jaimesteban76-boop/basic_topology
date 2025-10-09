@@ -920,6 +920,15 @@ theorem indiscrete_neighborhood_iff {X: Type*} (N: Set X) (x: X): neighborhood {
     rw [h]
     apply neighborhood_univ (indiscrete_is_topology X)
 
+-- in a metric space every open ball of positive radius is a neighborhood
+theorem openball_neighborhood [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) {r: D} (hr: ⊥ < r): neighborhood (metric_opensets d) (openball d x r) x := by
+  exists openball d x r
+  repeat' (apply And.intro)
+  · apply openballs_sub_opensets hd
+    simp [openballs]
+  · exact (openball_mem_iff hd x r).mpr hr
+  · rfl
+
 -- The set of neighborhoods of a point
 def Nbhds (𝒯: Set (Set X)) (x: X): Set (Set X) :=
  {N | neighborhood 𝒯 N x}
@@ -1393,15 +1402,6 @@ theorem sierpiński_nonhausdorff: ¬hausdorff (sierpiński_topology.opensets) :=
     apply hU3
     simp_all
 
--- If r > 0 then B(x, r) is a neighborhood of x. TODO: move somewhere else
-theorem openball_neighborhood [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) {r: D} (hr: 0 < r): neighborhood (metric_opensets d) (openball d x r) x := by
-  exists (openball d x r)
-  sorry
-  -- repeat' constructor
-  -- · exact openball_open hd x r
-  -- · sorry -- exact?-- (openball_mem_iff hd x).mpr hr
-  -- · sorry -- exact?
-
 -- simple lemma: if balls are too far apart, their intersection is empty.
 lemma separated_balls [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) {x1 x2: X} {r1 r2: D} (h: r1 + r2 ≤ d x1 x2): Disjoint (openball d x1 r1) (openball d x2 r2) := by
   apply Set.disjoint_iff.mpr
@@ -1557,7 +1557,15 @@ def convergent_distance [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X
   ∃ l, converges_distance d x l
 
 -- equivalent definition in a metric space
-theorem limit_metric_iff [DistanceSpace D] (d: X → X → D) (x: Nat → X) (l: X): converges (metric_opensets d) x l ↔ converges_distance d x l := by
+theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (x: Nat → X) (l: X): converges (metric_opensets d) x l ↔ converges_distance d x l := by
+  constructor
+  intro h r hr
+  let N := openball d l r
+  have: N ∈ Nbhds (metric_opensets d) l := by
+    simp [Nbhds]
+    simp [metric_opensets]
+    sorry
+  sorry
   sorry
 
 def adherent_value (T: Set (Set X)) (x: Nat → X) (a: X): Prop :=
