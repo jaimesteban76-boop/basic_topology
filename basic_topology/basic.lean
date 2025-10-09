@@ -19,8 +19,6 @@ set_option linter.style.commandStart false
 set_option linter.style.longLine false
 set_option linter.dupNamespace false
 
-namespace Topology
-
 variable {X Y D: Type*}
 
 
@@ -76,18 +74,6 @@ For the most part we can just use `IsMetric` to avoid complexity, but `Metric` i
 
 -/
 
-def DistSelfBot [DistanceSpaceStruct D] (d: X → X → D): Prop :=
-  ∀ x, d x x = ⊥
-
-def DistBotEq [DistanceSpaceStruct D] (d: X → X → D): Prop :=
-  ∀ x y, d x y = ⊥ → x = y
-
-def Symmetric [DistanceSpaceStruct D] (d: X → X → D): Prop :=
-  ∀ x y, d x y = d y x
-
-def Subadditive [DistanceSpaceStruct D] (d: X → X → D): Prop :=
-  ∀ x y z, d x z ≤ d x y + d y z
-
 structure IsMetric [DistanceSpaceStruct D] (d: X → X → D): Prop where
   dist_self_bot: ∀ x, d x x = ⊥
   dist_bot_eq: ∀ x y, d x y = ⊥ → x = y
@@ -136,42 +122,32 @@ theorem neq_dist_pos [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x y:
 def discrete_metric (X D: Type*) [DecidableEq X] [CompleteDistanceSpace D]: X → X → D :=
   fun x y => if x = y then ⊥ else ⊤
 
-theorem discrete_metric_dist_self_bot (X D: Type*) [DecidableEq X] [CompleteDistanceSpace D]: DistSelfBot (discrete_metric X D) := by
-  intro x
-  simp [discrete_metric]
-
-theorem discrete_metric_dist_bot_eq (X D: Type*) [DecidableEq X] [Nontrivial D] [CompleteDistanceSpace D]: DistBotEq (discrete_metric X D) := by
-  intro x y
-  simp_all [discrete_metric]
-  intro h
-  have: ⊥ = (0: D) := by exact bot_eq_zero
-  have: ⊥ ≠ (⊤: D) := by exact bot_ne_top
-  have: ⊤ ≠ (0: D) := by (expose_names; exact Ne.symm (ne_of_eq_of_ne (id (Eq.symm this_1)) this))
-  have := h.mt this
-  simp_all
-
-theorem discrete_metric_symmetric (X D: Type*) [DecidableEq X] [Nontrivial D] [CompleteDistanceSpace D]: Symmetric (discrete_metric X D) := by
-  intro x y
-  simp [discrete_metric]
-  by_cases x = y <;> simp_all
-  intro
-  simp_all
-
-theorem discrete_metric_triangle (X D: Type*) [DecidableEq X] [CompleteDistanceSpace D]: Subadditive (discrete_metric X D) := by
-  intro x y z
-  by_cases x = y <;> -- tactic combinator
-  by_cases x = z <;>
-  by_cases y = z
-  repeat simp_all [discrete_metric]
-
 theorem discrete_metric_is_metric (X: Type*) [DecidableEq X] [Nontrivial D] [CompleteDistanceSpace D]: IsMetric (discrete_metric X D) := {
-  dist_self_bot :=  discrete_metric_dist_self_bot X D
-  dist_bot_eq := discrete_metric_dist_bot_eq X D
-  symmetric := discrete_metric_symmetric X D
-  triangle := discrete_metric_triangle X D
+  dist_self_bot := by
+    intro x
+    simp [discrete_metric]
+  dist_bot_eq := by
+    intro x y
+    simp_all [discrete_metric]
+    intro h
+    have: ⊥ = (0: D) := by exact bot_eq_zero
+    have: ⊥ ≠ (⊤: D) := by exact bot_ne_top
+    have: ⊤ ≠ (0: D) := by (expose_names; exact Ne.symm (ne_of_eq_of_ne (id (Eq.symm this_1)) this))
+    have := h.mt this
+    simp_all
+  symmetric := by
+    intro x y
+    simp [discrete_metric]
+    by_cases x = y <;> simp_all
+    intro
+    simp_all
+  triangle := by
+    intro x y z
+    by_cases x = y <;> -- tactic combinator
+    by_cases x = z <;>
+    by_cases y = z
+    repeat simp_all [discrete_metric]
 }
-
-
 
 
 
@@ -179,30 +155,22 @@ theorem discrete_metric_is_metric (X: Type*) [DecidableEq X] [Nontrivial D] [Com
 noncomputable def taxicab_metric [Add D] (dX: X → X → D) (dY: Y → Y → D): X × Y → X × Y → D :=
   fun (x1, y1) (x2, y2) => dX x1 x2 + dY y1 y2
 
-theorem taxicab_dist_self_bot [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: DistSelfBot dX) (hy: DistSelfBot dY): DistSelfBot (taxicab_metric dX dY) := by
-  intro (x, y)
-  simp [taxicab_metric, hx x, hy y]
-
-theorem taxicab_dist_zero_eq [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hX: IsMetric dX) (hY: IsMetric dY): DistBotEq (taxicab_metric dX dY) := by
-  intro (x1, y1) (x2, y2) h
-  simp_all [taxicab_metric]
-  constructor
-  · exact (dist_zero_iff hX).mp h.1
-  · exact (dist_zero_iff hY).mp h.2
-
-theorem taxicab_dist_symmetric [DistanceSpaceStruct D] {dX: X → X → D} {dY: Y → Y → D} (hx: Symmetric dX) (hy: Symmetric dY): Symmetric (taxicab_metric dX dY) := by
-  intro _ _
-  simp [taxicab_metric]
-  rw [hx, hy]
-
 theorem taxicab_is_metric [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hX: IsMetric dX) (hY: IsMetric dY): IsMetric (taxicab_metric dX dY) := {
-  dist_self_bot :=  taxicab_dist_self_bot hX.dist_self_bot hY.dist_self_bot
-  dist_bot_eq := taxicab_dist_zero_eq hX hY
-  symmetric := taxicab_dist_symmetric hX.symmetric hY.symmetric
+  dist_self_bot := by
+    intro (x, y)
+    simp [taxicab_metric, hX.dist_self_bot x, hY.dist_self_bot y]
+  dist_bot_eq := by
+    intro (x1, y1) (x2, y2) h
+    simp_all [taxicab_metric]
+    constructor
+    · exact (dist_zero_iff hX).mp h.1
+    · exact (dist_zero_iff hY).mp h.2
+  symmetric := by
+    intro _ _
+    simp [taxicab_metric]
+    rw [hX.symmetric, hY.symmetric]
   triangle := sorry
 }
-
-
 
 
 
@@ -211,35 +179,25 @@ theorem taxicab_is_metric [DistanceSpace D] {dX: X → X → D} {dY: Y → Y →
 noncomputable def product_metric [Max D] (dX: X → X → D) (dY: Y → Y → D): X × Y → X × Y → D :=
   fun (x1, y1) (x2, y2) => max (dX x1 x2) (dY y1 y2)
 
-theorem product_dist_self_bot [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: DistSelfBot dX) (hy: DistSelfBot dY): DistSelfBot (product_metric dX dY) := by
-  intro (x, y)
-  simp [product_metric, hx x, hy y]
-
-theorem product_dist_bot_eq [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: DistBotEq dX) (hy: DistBotEq dY): DistBotEq (product_metric dX dY) := by
-  intro (x1, y1) (x2, y2) h
-  have := max_eq_bot.mp h
-  simp
-  constructor
-  · apply hx
-    exact this.left
-  · apply hy
-    exact this.right
-
-theorem product_dist_symmetric [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: Symmetric dX) (hy: Symmetric dY): Symmetric (product_metric dX dY) := by
-  intro _ _
-  simp [product_metric]
-  rw [hx, hy]
-
-theorem product_dist_triangle [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: Subadditive dX) (hy: Subadditive dY): Subadditive (product_metric dX dY) := by
-  intro _ _
-  simp [product_metric]
-  sorry
-
-theorem product_is_metric [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: IsMetric dX) (hy: IsMetric dY): IsMetric (product_metric dX dY) := {
-  dist_self_bot := product_dist_self_bot hx.dist_self_bot hy.dist_self_bot
-  dist_bot_eq := product_dist_bot_eq hx.dist_bot_eq hy.dist_bot_eq
-  symmetric := product_dist_symmetric hx.symmetric hy.symmetric
-  triangle := product_dist_triangle hx.triangle hy.triangle
+theorem product_is_metric [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hX: IsMetric dX) (hY: IsMetric dY): IsMetric (product_metric dX dY) := {
+  dist_self_bot := by
+    intro (x, y)
+    simp [product_metric, hX.dist_self_bot x, hY.dist_self_bot y]
+  dist_bot_eq := by
+    intro (x1, y1) (x2, y2) h
+    have := max_eq_bot.mp h
+    simp
+    constructor
+    · apply hX.dist_bot_eq
+      exact this.left
+    · apply hY.dist_bot_eq
+      exact this.right
+  symmetric := by
+    intro _ _
+    simp [product_metric]
+    rw [hX.symmetric, hY.symmetric]
+  triangle := by
+    sorry
 }
 
 
@@ -282,15 +240,15 @@ theorem openball_zero_empty [DistanceSpace D] {d: X → X → D} (x: X): openbal
   · exact False.elim
 
 -- x ∈ B(x, r) iff. r > ⊥
-theorem openball_mem_iff [DistanceSpaceStruct D] {d: X → X → D} (hd: DistSelfBot d) (x: X) (r: D): x ∈ openball d x r ↔ ⊥ < r := by
+theorem openball_mem_iff [DistanceSpaceStruct D] {d: X → X → D} (hd: IsMetric d) (x: X) (r: D): x ∈ openball d x r ↔ ⊥ < r := by
   constructor
   · intro h
     simp [openball] at h
-    rw [hd] at h
+    rw [hd.dist_self_bot] at h
     exact h
   · intro h
     simp [openball]
-    rw [hd]
+    rw [hd.dist_self_bot]
     exact h
 
 -- The closed ball of radius zero is a singleton
@@ -765,7 +723,7 @@ theorem metric_openballs_base [DistanceSpace D] {d: X → X → D} (hd: IsMetric
     exists openball d x r
     repeat' (apply And.intro)
     · simp [openballs]
-    · exact (openball_mem_iff hd.dist_self_bot x r).mpr hr1
+    · exact (openball_mem_iff hd x r).mpr hr1
     · exact hr2
 
 -- sierpiński base
