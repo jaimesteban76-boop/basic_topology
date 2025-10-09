@@ -13,59 +13,108 @@ Formalization of basic point-set topology.
 
 import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Data.ENNReal.Basic
-import Mathlib.Order.BoundedOrder.Basic
+import Mathlib.Data.ENNReal.Inv
 
 set_option linter.style.commandStart false
 set_option linter.style.longLine false
+set_option linter.dupNamespace false
 
 namespace Topology
 
-universe u
-
 variable {X Y D: Type*}
+
+
+
+
 
 /-
 
-First definition is a metric space. We have three versions:
+"Distance spaces" so that we can work in a generalized metric space.
 
-1. Given a function d: X → X → ENNReal, `IsMetric d` is the proposition that d is a metric.
+- `DistanceSpaceStruct` is a class carrying just enough data to define a metric space, namely ≤ and + and ⊥ (the bottom element i.e. zero)
+
+- `DistanceSpace` gives a linear order on ≤ and commutative monoid structure on +, along with compatibility that ⊥ = 0.
+  - This generalized non-negative reals.
+
+- `CompleteDistanceSpace` adds a top element ⊤ which is infinity for the extended reals.
+  - It is compatible with the additive monoid by being absorbing, i.e. r + ⊤ = ⊤
+
+-/
+
+class DistanceSpaceStruct (D: Type*) extends LE D, LT D, Bot D, Add D
+
+class DistanceSpace (D: Type*) extends AddCommMonoid D, LinearOrder D, CanonicallyOrderedAdd D, OrderBot D
+
+class CompleteDistanceSpace (D: Type*) extends DistanceSpace D, CompleteLattice D
+
+instance [DistanceSpace D]: DistanceSpaceStruct D := {}
+
+instance [CompleteDistanceSpace D]: DistanceSpace D := {}
+
+noncomputable instance: DistanceSpace NNReal := {}
+
+noncomputable instance: CompleteDistanceSpace ENNReal := {}
+
+
+
+
+
+/-
+
+Three version of a metric space:
+
+1. Given a function d: X → X → D, `IsMetric d` is the proposition that d is a metric.
   It is a structured proposition that comes with 4 fields, the axioms.
 
-2. `Metric X` is the type of all metrics on X.
-  If `d: Metric X` then d has two fields, `d.dist` for the distance function and `d.is_metric` for the axioms.
+2. `Metric X D` is the type of all metrics on X with distance values in D.
+  If `d: Metric X D` then d has two fields, `d.dist` for the distance function and `d.is_metric` for the axioms.
 
-3. `MetricSpace` is the type of all metric spaces. If `X: MetricSpace` then `X.points` is the type of points and `X.metric` is the metric.
+3. `MetricSpace D` is the type of all metric spaces valued in D.
+  If `X: MetricSpace D` then `X.points` is the type of points and `X.metric` is the metric.
 
 For the most part we can just use `IsMetric` to avoid complexity, but `Metric` is sometimes useful.
 
 -/
 
-
-def DistSelfBot [Bot D] (d: X → X → D): Prop :=
+def DistSelfBot [DistanceSpaceStruct D] (d: X → X → D): Prop :=
   ∀ x, d x x = ⊥
 
-def DistBotEq [Bot D] (d: X → X → D): Prop :=
+def DistBotEq [DistanceSpaceStruct D] (d: X → X → D): Prop :=
   ∀ x y, d x y = ⊥ → x = y
 
-def Symmetric (d: X → X → D): Prop :=
+def Symmetric [DistanceSpaceStruct D] (d: X → X → D): Prop :=
   ∀ x y, d x y = d y x
 
-def Subadditive [Add D] [LE D] (d: X → X → D): Prop :=
+def Subadditive [DistanceSpaceStruct D] (d: X → X → D): Prop :=
   ∀ x y z, d x z ≤ d x y + d y z
 
-structure IsMetric [LE D] [Bot D] [Add D] (d: X → X → D): Prop where
-  dist_self_bot: DistSelfBot d
-  dist_bot_eq: DistBotEq d
-  symmetric: Symmetric d
-  triangle: Subadditive d
+structure IsMetric [DistanceSpaceStruct D] (d: X → X → D): Prop where
+  dist_self_bot: ∀ x, d x x = ⊥
+  dist_bot_eq: ∀ x y, d x y = ⊥ → x = y
+  symmetric: ∀ x y, d x y = d y x
+  triangle: ∀ x y z, d x z ≤ d x y + d y z
 
-structure Metric (X D: Type*) [LE D] [Bot D] [Add D] where
-  d: X → X → D
-  is_metric: IsMetric d
+structure Metric (X D: Type*) [DistanceSpaceStruct D] where
+  distance: X → X → D
+  is_metric: IsMetric distance
 
+structure MetricSpace (D: Type*) [DistanceSpaceStruct D] where
+  points: Type*
+  distance: points → points → D
+  is_metric: IsMetric distance
+
+theorem dist_zero_iff [DistanceSpace D] {d: X → X → D} (h: IsMetric d) {x y: X}: d x y = 0 ↔ x = y := by
+  rw [←bot_eq_zero]
+  constructor
+  · apply h.dist_bot_eq
+  · intro h1
+    rw [h1, h.dist_self_bot]
+
+theorem dist_nonzero_iff [DistanceSpace D] {d: X → X → D} (h: IsMetric d) {x y: X}: d x y ≠ 0 ↔ x ≠ y := by
+  exact not_congr (dist_zero_iff h)
 
 -- two points are unequal iff. their distance is positive
-theorem neq_dist_pos [PartialOrder D] [OrderBot D] [Add D] {d: X → X → D} (hd: IsMetric d) (x y: X): x ≠ y ↔ ⊥ < d x y := by
+theorem neq_dist_pos [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x y: X): x ≠ y ↔ ⊥ < d x y := by
   constructor
   · intro h
     have := hd.dist_bot_eq x y
@@ -79,78 +128,94 @@ theorem neq_dist_pos [PartialOrder D] [OrderBot D] [Add D] {d: X → X → D} (h
     have: d x y = ⊥ := by rw [h2, hd.dist_self_bot]
     contradiction
 
+
+
+
+
 -- the discrete metric on an arbitrary type
-def discrete_metric (X D: Type*) [DecidableEq X] [Bot D] [Top D]: X → X → D :=
+def discrete_metric (X D: Type*) [DecidableEq X] [CompleteDistanceSpace D]: X → X → D :=
   fun x y => if x = y then ⊥ else ⊤
 
-theorem discrete_metric_dist_self_bot (X D: Type*) [DecidableEq X] [Bot D] [Top D]: DistSelfBot (discrete_metric X D) := by
+theorem discrete_metric_dist_self_bot (X D: Type*) [DecidableEq X] [CompleteDistanceSpace D]: DistSelfBot (discrete_metric X D) := by
   intro x
   simp [discrete_metric]
 
-theorem discrete_metric_dist_bot_eq (X D: Type*) [DecidableEq X] [Nontrivial D] [PartialOrder D] [BoundedOrder D]: DistBotEq (discrete_metric X D) := by
+theorem discrete_metric_dist_bot_eq (X D: Type*) [DecidableEq X] [Nontrivial D] [CompleteDistanceSpace D]: DistBotEq (discrete_metric X D) := by
   intro x y
   simp_all [discrete_metric]
+  intro h
+  have: ⊥ = (0: D) := by exact bot_eq_zero
+  have: ⊥ ≠ (⊤: D) := by exact bot_ne_top
+  have: ⊤ ≠ (0: D) := by (expose_names; exact Ne.symm (ne_of_eq_of_ne (id (Eq.symm this_1)) this))
+  have := h.mt this
+  simp_all
 
-
-theorem discrete_metric_symmetric (X D: Type*) [DecidableEq X] [Nontrivial D] [PartialOrder D] [BoundedOrder D]: Symmetric (discrete_metric X D) := by
+theorem discrete_metric_symmetric (X D: Type*) [DecidableEq X] [Nontrivial D] [CompleteDistanceSpace D]: Symmetric (discrete_metric X D) := by
   intro x y
   simp [discrete_metric]
-  by_cases h: x = y <;> simp_all
-  exact fun a => h (Eq.symm a)
+  by_cases x = y <;> simp_all
+  intro
+  simp_all
 
-theorem discrete_metric_triangle (X D: Type*) [DecidableEq X] [LinearOrderedAddCommMonoidWithTop D] [OrderBot D]: Subadditive (discrete_metric X D) := by
+theorem discrete_metric_triangle (X D: Type*) [DecidableEq X] [CompleteDistanceSpace D]: Subadditive (discrete_metric X D) := by
   intro x y z
   by_cases x = y <;> -- tactic combinator
   by_cases x = z <;>
   by_cases y = z
   repeat simp_all [discrete_metric]
 
-theorem discrete_metric_is_metric (X: Type*) [DecidableEq X]: IsMetric (discrete_metric X ENNReal) := {
-  dist_self_bot :=  discrete_metric_dist_self_bot X ENNReal
-  dist_bot_eq := discrete_metric_dist_bot_eq X ENNReal
-  symmetric := discrete_metric_symmetric X ENNReal
-  triangle := discrete_metric_triangle X ENNReal
+theorem discrete_metric_is_metric (X: Type*) [DecidableEq X] [Nontrivial D] [CompleteDistanceSpace D]: IsMetric (discrete_metric X D) := {
+  dist_self_bot :=  discrete_metric_dist_self_bot X D
+  dist_bot_eq := discrete_metric_dist_bot_eq X D
+  symmetric := discrete_metric_symmetric X D
+  triangle := discrete_metric_triangle X D
 }
 
+
+
+
+
 -- Taxicab metric: given two metrics, their sum is a metric on the product space.
-noncomputable def taxicab_metric {X Y D: Type*} [Add D] (dX: X → X → D) (dY: Y → Y → D): X × Y → X × Y → D :=
+noncomputable def taxicab_metric [Add D] (dX: X → X → D) (dY: Y → Y → D): X × Y → X × Y → D :=
   fun (x1, y1) (x2, y2) => dX x1 x2 + dY y1 y2
 
-theorem taxicab_dist_self_bot {X Y D: Type*} [AddZeroClass D] [PartialOrder D] [CanonicallyOrderedAdd D] [OrderBot D] {dX: X → X → D} {dY: Y → Y → D} (hx: DistSelfBot dX) (hy: DistSelfBot dY): DistSelfBot (taxicab_metric dX dY) := by
+theorem taxicab_dist_self_bot [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: DistSelfBot dX) (hy: DistSelfBot dY): DistSelfBot (taxicab_metric dX dY) := by
   intro (x, y)
-  simp [taxicab_metric, hx x, hy y, bot_eq_zero]
+  simp [taxicab_metric, hx x, hy y]
 
-theorem taxicab_dist_zero_eq {X Y D: Type*} [LE D] [Add D] [PartialOrder D] [OrderBot D] {dX: X → X → D} {dY: Y → Y → D} (hx: DistBotEq dX) (hy: DistBotEq dY): DistBotEq (taxicab_metric dX dY) := by
+theorem taxicab_dist_zero_eq [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hX: IsMetric dX) (hY: IsMetric dY): DistBotEq (taxicab_metric dX dY) := by
   intro (x1, y1) (x2, y2) h
   simp_all [taxicab_metric]
-  have: dX x1 x2 ≤ ⊥ := by sorry
-  have: dX x1 x2 = ⊥ := by sorry -- use `le_bot_iff`
-  have: dY y1 y2 ≤ ⊥ := by sorry
-  have: dY y1 y2 = ⊥ := by sorry -- use `le_bot_iff`
   constructor
-  · exact hx x1 x2 (by assumption)
-  · exact hy y1 y2 (by assumption)
+  · exact (dist_zero_iff hX).mp h.1
+  · exact (dist_zero_iff hY).mp h.2
 
-theorem taxicab_dist_symmetric {X Y D: Type*} [Add D] {dX: X → X → D} {dY: Y → Y → D} (hx: Symmetric dX) (hy: Symmetric dY): Symmetric (taxicab_metric dX dY) := by
+theorem taxicab_dist_symmetric [DistanceSpaceStruct D] {dX: X → X → D} {dY: Y → Y → D} (hx: Symmetric dX) (hy: Symmetric dY): Symmetric (taxicab_metric dX dY) := by
   intro _ _
   simp [taxicab_metric]
   rw [hx, hy]
 
+theorem taxicab_is_metric [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hX: IsMetric dX) (hY: IsMetric dY): IsMetric (taxicab_metric dX dY) := {
+  dist_self_bot :=  taxicab_dist_self_bot hX.dist_self_bot hY.dist_self_bot
+  dist_bot_eq := taxicab_dist_zero_eq hX hY
+  symmetric := taxicab_dist_symmetric hX.symmetric hY.symmetric
+  triangle := sorry
+}
 
 
-theorem taxicab_is_metric {X Y: Type*} {dX: X → X → ENNReal} {dY: Y → Y → ENNReal} (hdX: IsMetric dX) (hdY: IsMetric dY): IsMetric (taxicab_metric dX dY) :=
-  sorry
+
+
 
 -- product metric
 -- Taxicab metric: given two metrics, their sum is a metric on the product space.
-noncomputable def product_metric {X Y D: Type*} [Max D] (dX: X → X → D) (dY: Y → Y → D): X × Y → X × Y → D :=
+noncomputable def product_metric [Max D] (dX: X → X → D) (dY: Y → Y → D): X × Y → X × Y → D :=
   fun (x1, y1) (x2, y2) => max (dX x1 x2) (dY y1 y2)
 
-theorem product_dist_self_bot {X Y D: Type*} [LinearOrder D] [OrderBot D] {dX: X → X → D} {dY: Y → Y → D} (hx: DistSelfBot dX) (hy: DistSelfBot dY): DistSelfBot (product_metric dX dY) := by
+theorem product_dist_self_bot [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: DistSelfBot dX) (hy: DistSelfBot dY): DistSelfBot (product_metric dX dY) := by
   intro (x, y)
   simp [product_metric, hx x, hy y]
 
-theorem product_dist_bot_eq {X Y D: Type*} [LinearOrder D] [OrderBot D] {dX: X → X → D} {dY: Y → Y → D} (hx: DistBotEq dX) (hy: DistBotEq dY): DistBotEq (product_metric dX dY) := by
+theorem product_dist_bot_eq [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: DistBotEq dX) (hy: DistBotEq dY): DistBotEq (product_metric dX dY) := by
   intro (x1, y1) (x2, y2) h
   have := max_eq_bot.mp h
   simp
@@ -160,50 +225,64 @@ theorem product_dist_bot_eq {X Y D: Type*} [LinearOrder D] [OrderBot D] {dX: X �
   · apply hy
     exact this.right
 
-theorem product_dist_symmetric {X Y D: Type*} [Max D] {dX: X → X → D} {dY: Y → Y → D} (hx: Symmetric dX) (hy: Symmetric dY): Symmetric (product_metric dX dY) := by
+theorem product_dist_symmetric [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: Symmetric dX) (hy: Symmetric dY): Symmetric (product_metric dX dY) := by
   intro _ _
   simp [product_metric]
   rw [hx, hy]
 
-theorem product_dist_triangle {X Y D: Type*} [LE D] [Add D] [Max D] {dX: X → X → D} {dY: Y → Y → D} (hx: Subadditive dX) (hy: Subadditive dY): Subadditive (product_metric dX dY) := by
+theorem product_dist_triangle [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: Subadditive dX) (hy: Subadditive dY): Subadditive (product_metric dX dY) := by
   intro _ _
   simp [product_metric]
   sorry
 
-theorem product_is_metric {X Y: Type*} [LinearOrder D] [OrderBot D] [Add D] {dX: X → X → D} {dY: Y → Y → D} (hx: IsMetric dX) (hy: IsMetric dY): IsMetric (product_metric dX dY) := {
+theorem product_is_metric [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} (hx: IsMetric dX) (hy: IsMetric dY): IsMetric (product_metric dX dY) := {
   dist_self_bot := product_dist_self_bot hx.dist_self_bot hy.dist_self_bot
   dist_bot_eq := product_dist_bot_eq hx.dist_bot_eq hy.dist_bot_eq
   symmetric := product_dist_symmetric hx.symmetric hy.symmetric
   triangle := product_dist_triangle hx.triangle hy.triangle
 }
 
-def isometry {X X' D: Type*} (d: X → X → D) (d': X' → X' → D) (f: X → X'): Prop :=
-  ∀ x y, d x y = d' (f x) (f y)
+
+
+
+
+def isometry (dX: X → X → D) (dY: Y → Y → D) (f: X → Y): Prop :=
+  ∀ x1 x2, dX x1 x2 = dY (f x1) (f x2)
 
 theorem isometry_id (d: X → X → D): isometry d d id := by
   intro _ _; rfl
 
-theorem isometry_is_injective {X Y: Type*} [LE D] [Add D] [Bot D] {dX: X → X → D} {dY: Y → Y → D} (hX: IsMetric dX) (hY: IsMetric dY) (f: X → Y) (hf: isometry dX dY f): Function.Injective f := by
+theorem isometry_is_injective [DistanceSpaceStruct D] {dX: X → X → D} {dY: Y → Y → D} (hX: IsMetric dX) (hY: IsMetric dY) (f: X → Y) (hf: isometry dX dY f): Function.Injective f := by
   intro _ _ h
   apply hX.dist_bot_eq
   rw [hf, ←h]
   apply hY.dist_self_bot
 
-def openball [LT D] (d: X → X → D) (x: X) (r: D): Set X :=
+
+
+
+
+def openball [DistanceSpaceStruct D] (d: X → X → D) (x: X) (r: D): Set X :=
  {z | d x z < r}
 
-def closedball [LE D] (d: X → X → D) (x: X) (r: D): Set X :=
+def closedball [DistanceSpaceStruct D] (d: X → X → D) (x: X) (r: D): Set X :=
  {z | d x z ≤ r}
 
-def sphere (d: X → X → D) (x: X) (r: D): Set X :=
+def sphere [DistanceSpaceStruct D] (d: X → X → D) (x: X) (r: D): Set X :=
  {z | d x z = r}
 
 -- The open ball of radius zero is empty
-theorem openball_zero_empty [Preorder D] [OrderBot D] {d: X → X → D} (x: X): openball d x ⊥ = ∅ := by
-  simp [openball]
+theorem openball_zero_empty [DistanceSpace D] {d: X → X → D} (x: X): openball d x ⊥ = ∅ := by
+  rw [openball]
+  ext z
+  constructor
+  · intro h
+    apply not_le_of_gt h
+    apply bot_le
+  · exact False.elim
 
 -- x ∈ B(x, r) iff. r > ⊥
-theorem openball_mem_iff [LT D] [Bot D] {d: X → X → D} (hd: DistSelfBot d) (x: X) (r: D): x ∈ openball d x r ↔ ⊥ < r := by
+theorem openball_mem_iff [DistanceSpaceStruct D] {d: X → X → D} (hd: DistSelfBot d) (x: X) (r: D): x ∈ openball d x r ↔ ⊥ < r := by
   constructor
   · intro h
     simp [openball] at h
@@ -215,78 +294,76 @@ theorem openball_mem_iff [LT D] [Bot D] {d: X → X → D} (hd: DistSelfBot d) (
     exact h
 
 -- The closed ball of radius zero is a singleton
-theorem closedball_zero_singleton {d: X → X → ENNReal} (hd: IsMetric d) (x: X): closedball d x ⊥ = {x} := by
+theorem closedball_zero_singleton [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X): closedball d x ⊥ = {x} := by
   ext z
   simp [closedball]
   constructor
   · intro h
-    have := hd.eq_iff x z
-    have := this.mpr h
-    exact Eq.symm this
+    apply Eq.symm
+    exact (dist_zero_iff hd).mp h
   · intro h
-    have := hd.eq_iff x z
-    exact this.mp (Eq.symm h)
+    rw [h, ←bot_eq_zero]
+    apply hd.dist_self_bot
 
--- In the discrete metric, if 0 < r < ∞ then B(x, r) = {x}
-theorem discrete_openball_singleton {X: Type*} [DecidableEq X] (x: X) {r: ENNReal} (h1: 0 < r) (h2: r < ⊤): openball (discrete_metric X) x r = {x} := by
-  simp_all [openball]--, discrete_metric]
-  have r_finite: r ≠ ⊤ := by exact LT.lt.ne_top h2
+-- In the discrete metric, if 0 < r ≤ ⊤ then B(x, r) = {x}
+theorem discrete_openball_singleton [DecidableEq X] [CompleteDistanceSpace D] (x: X) {r: D} (h1: ⊥ < r): openball (discrete_metric X D) x r = {x} := by
   ext z
+  simp_all [openball]
   constructor
   · intro h
-    have: discrete_metric X x z ≠ ⊤ := LT.lt.ne_top h
+    have := LT.lt.ne_top h
     simp_all [discrete_metric]
-  · simp_all [discrete_metric]
-
-theorem discrete_openball_unit {X: Type*} [DecidableEq X] (x: X): openball (discrete_metric X) x 1 = {x} := by
-  exact discrete_openball_singleton x (zero_lt_one' ENNReal) ENNReal.one_lt_top
+  · intro h
+    simp_all [discrete_metric]
 
 -- If s = r - d(x, x0) then B(x0, s) ⊆ B(x, r)
-
-theorem openball_mem_smaller_ball {d: X → X → ENNReal} (hd: IsMetric d) {x x0: X} {r: ENNReal}: openball d x0 (r - d x x0) ⊆ openball d x r := by
+theorem openball_mem_smaller_ball [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) {x x0: X} {r: D}: openball d x0 r ⊆ openball d x (r + d x x0) := by
   intro z hz
-  calc
-    d x z ≤ d x x0 + d x0 z       := by exact hd.triangle x x0 z
-        _ < d x x0 + (r - d x x0) := by sorry
-        _ = r                     := by sorry
+  sorry
+  -- calc
+  --   d x z ≤ d x x0 + d x0 z       := by exact hd.triangle x x0 z
+  --       _ < d x x0 + (r - d x x0) := by sorry
+  --       _ = r                     := by sorry
 
 -- If x0 ∈ C(x, r)ᶜ and s = r - d(x, x0) then B(x0, s) ⊆ C(x, r)ᶜ
-theorem closedball_compl_mem {d: X → X → ENNReal} (hd: IsMetric d) {x x0: X} {r: ENNReal} (hx0: x0 ∈ (closedball d x r)ᶜ): openball d x0 (d x x0 - r) ⊆ (closedball d x r)ᶜ := by
+theorem closedball_compl_mem [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) {x x0: X} {r: D} (hx0: x0 ∈ (closedball d x r)ᶜ): openball d x0 r ⊆ (closedball d x (r + d x x0))ᶜ := by
   sorry
 
 -- definition of an open set in a metric space
 -- we will give them the prefix `metric_` since we need these names later
 -- note its important that 0 < r in the definition of open set, even though this isnt required to be an open ball.
 -- (otherwise every set is trivially open by taking r=0 at every point.)
-def metric_openset (d: X → X → ENNReal) (A: Set X): Prop :=
-  ∀ x ∈ A, ∃ r, 0 < r ∧ openball d x r ⊆ A
+def metric_openset [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): Prop :=
+  ∀ x ∈ A, ∃ r, ⊥ < r ∧ openball d x r ⊆ A
 
-def metric_closedset (d: X → X → ENNReal) (A: Set X): Prop :=
+def metric_closedset [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): Prop :=
   metric_openset d Aᶜ
 
-def metric_clopenset (d: X → X → ENNReal) (A: Set X): Prop :=
+def metric_clopenset [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): Prop :=
   metric_openset d A ∧ metric_closedset d A
 
 -- The empty set is clopen
-theorem metric_empty_clopen (d: X → X → ENNReal): metric_clopenset d ∅ := by
+theorem metric_empty_clopen [DistanceSpace D] [Nontrivial D] (d: X → X → D): metric_clopenset d ∅ := by
   constructor
   · intro _ _
-    exists 0
+    exists ⊥
   · intro _ hx
-    exists 1
+    obtain ⟨r, hr⟩ := exists_ne (⊥: D)
+    exists r
     constructor
-    · exact zero_lt_one
+    · simp_all
+      exact pos_of_ne_zero hr
     · exact fun _ _ => hx
 
 -- If A is clopen then Aᶜ is clopen
-theorem clopen_implies_compl_clopen (d: X → X → ENNReal) {A: Set X} (h: metric_clopenset d A): metric_clopenset d Aᶜ := by
+theorem clopen_implies_compl_clopen [DistanceSpaceStruct D] (d: X → X → D) {A: Set X} (h: metric_clopenset d A): metric_clopenset d Aᶜ := by
   constructor
   · exact h.right
   · simp [metric_closedset]
     exact h.left
 
 -- A is clopen iff. Aᶜ is clopen
-theorem clopen_iff_compl_clopen (d: X → X → ENNReal) (A: Set X): metric_clopenset d A ↔ metric_clopenset d Aᶜ := by
+theorem clopen_iff_compl_clopen [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): metric_clopenset d A ↔ metric_clopenset d Aᶜ := by
   constructor
   · exact clopen_implies_compl_clopen d
   · intro h
@@ -294,31 +371,34 @@ theorem clopen_iff_compl_clopen (d: X → X → ENNReal) (A: Set X): metric_clop
     exact clopen_implies_compl_clopen d h
 
 -- The whole space is clopen
-theorem metric_univ_clopen (d: X → X → ENNReal): metric_clopenset d Set.univ := by
+theorem metric_univ_clopen [DistanceSpace D] [Nontrivial D] (d: X → X → D): metric_clopenset d Set.univ := by
   rw [←Set.compl_empty]
   exact (clopen_iff_compl_clopen d ∅).mp (metric_empty_clopen d)
 
 -- Open ball is open
-theorem openball_open {d: X → X → ENNReal} (hd: IsMetric d) (x: X) (r: ENNReal): metric_openset d (openball d x r) := by
+-- TODO this needs work since we can't subtract..
+theorem openball_open [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) (r: D): metric_openset d (openball d x r) := by
   intro z hz
-  exists r - d x z
-  constructor
-  · exact tsub_pos_of_lt hz
-  · exact openball_mem_smaller_ball hd
+  sorry
+  -- exists r - d x z
+  -- constructor
+  -- · exact tsub_pos_of_lt hz
+  -- · exact openball_mem_smaller_ball hd
 
 -- Closed ball is closed
-theorem closedball_closed {d: X → X → ENNReal} (hd: IsMetric d) (x: X) (r: ENNReal): metric_closedset d (closedball d x r) := by
+theorem closedball_closed [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) (r: D): metric_closedset d (closedball d x r) := by
   intro x0 hx0
-  exists d x x0 - r
-  constructor
-  · simp_all [closedball]
-  · exact closedball_compl_mem hd hx0
+  sorry
+  -- exists d x x0 - r
+  -- constructor
+  -- · simp_all [closedball]
+  -- · exact closedball_compl_mem hd hx0
 
 -- the set of open balls in a metric space
-def openballs (d: X → X → ENNReal): Set (Set X) :=
-  ⋃ (x: X), ⋃ (r: ENNReal), {openball d x r}
+def openballs [DistanceSpaceStruct D] (d: X → X → D): Set (Set X) :=
+  ⋃ (x: X), ⋃ (r: D), {openball d x r}
 
-theorem open_iff_sUnion_of_balls (d: X → X → ENNReal) (hd: IsMetric d) (A: Set X): metric_openset d A ↔ ∃ 𝒰 ⊆ openballs d, A = ⋃₀ 𝒰 := by
+theorem open_iff_sUnion_of_balls [DistanceSpace D] (d: X → X → D) (hd: IsMetric d) (A: Set X): metric_openset d A ↔ ∃ 𝒰 ⊆ openballs d, A = ⋃₀ 𝒰 := by
   apply Iff.intro
   · intro h
     exists fun U => U ⊆ A ∧ U ∈ openballs d
@@ -342,21 +422,22 @@ theorem open_iff_sUnion_of_balls (d: X → X → ENNReal) (hd: IsMetric d) (A: S
     have := h𝒰1 hU1
     simp_all [openballs]
     obtain ⟨x, r, hx⟩ := this
-    exists r - d x z
-    constructor
-    · rw [←hx] at hU2
-      simp_all [openball]
-    · calc
-        openball d z (r - d x z)
-        _ ⊆ openball d x r := openball_mem_smaller_ball hd
-        _ = U              := hx
-        _ ⊆ ⋃₀ 𝒰          := Set.subset_sUnion_of_subset 𝒰 U (fun ⦃a⦄ a ↦ a) hU1
+    sorry
+    -- exists r - d x z
+    -- constructor
+    -- · rw [←hx] at hU2
+    --   simp_all [openball]
+    -- · calc
+    --     openball d z (r - d x z)
+    --     _ ⊆ openball d x r := openball_mem_smaller_ball hd
+    --     _ = U              := hx
+    --     _ ⊆ ⋃₀ 𝒰          := Set.subset_sUnion_of_subset 𝒰 U (fun ⦃a⦄ a ↦ a) hU1
 
 -- the set of all open sets in a metric space
-def metric_opensets (d: X → X → ENNReal): Set (Set X) :=
+def metric_opensets [DistanceSpace D] (d: X → X → D): Set (Set X) :=
  {A | metric_openset d A}
 
-theorem openballs_sub_opensets {d: X → X → ENNReal} (hd: IsMetric d): openballs d ⊆ metric_opensets d := by
+theorem openballs_sub_opensets [DistanceSpace D] {d: X → X → D} (hd: IsMetric d): openballs d ⊆ metric_opensets d := by
   intro _ hU
   simp_all [openballs]
   obtain ⟨x, r, hU⟩ := hU
@@ -364,16 +445,16 @@ theorem openballs_sub_opensets {d: X → X → ENNReal} (hd: IsMetric d): openba
   exact openball_open hd x r
 
 -- Every set is open in the topology generated by the discrete metric.
-theorem discrete_opensets (X: Type*) [DecidableEq X]: metric_opensets (discrete_metric X) = Set.univ := by
+theorem discrete_opensets (X D: Type*) [CompleteDistanceSpace D] [Nontrivial D] [DecidableEq X]: metric_opensets (discrete_metric X D) = Set.univ := by
   apply Set.eq_univ_of_univ_subset
   intro A hA x hx
-  exists 1
+  exists ⊤
   constructor
-  · exact zero_lt_one' ENNReal
-  · simp [discrete_openball_unit, hx]
+  · exact bot_lt_top
+  · sorry -- simp [discrete_openball_singleton x bot_lt_top]
 
 -- in a metric space, arbitrary unions of open sets are open (doesnt actually depend on d being a metric)
-theorem metric_open_sUnion {d: X → X → ENNReal} {C: Set (Set X)} (h: C ⊆ metric_opensets d): ⋃₀ C ∈ metric_opensets d := by
+theorem metric_open_sUnion [DistanceSpace D] {d: X → X → D} {C: Set (Set X)} (h: C ⊆ metric_opensets d): ⋃₀ C ∈ metric_opensets d := by
   intro z ⟨U, hU1, hU2⟩
   obtain ⟨r, hr1, hr2⟩ := h hU1 z hU2
   exists r
@@ -382,12 +463,16 @@ theorem metric_open_sUnion {d: X → X → ENNReal} {C: Set (Set X)} (h: C ⊆ m
   · exact Set.subset_sUnion_of_subset C U hr2 hU1
 
 -- in a metric space, finite intersections of open sets are open
-theorem metric_open_finite_sInter {d: X → X → ENNReal} (hd: IsMetric d) {C: Set (Set X)} (h1: C ⊆ metric_opensets d) (h2: Finite C): ⋂₀ C ∈ metric_opensets d := by
+theorem metric_open_finite_sInter [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) {C: Set (Set X)} (h1: C ⊆ metric_opensets d) (h2: Finite C): ⋂₀ C ∈ metric_opensets d := by
   intro z hz
   simp at hz
 
   -- should be able to get a finite set of radii
   sorry
+
+
+
+
 
 /-
 
@@ -408,8 +493,8 @@ structure Topology (X: Type*) where
   opensets: Set (Set X)
   is_topology: IsTopology opensets
 
-structure TopologicalSpace: Type (u + 1) where
-  points: Type u
+structure TopologicalSpace where
+  points: Type*
   topology: Topology points
 
 theorem empty_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): ∅ ∈ 𝒯 := by
@@ -525,25 +610,19 @@ theorem indiscrete_is_topology (X: Type*): IsTopology {∅, @Set.univ X} := {
 }
 
 -- the opensets in a metric space form a topology
-theorem metric_opensets_is_topology {d: X → X → ENNReal} (hd: IsMetric d): IsTopology (metric_opensets d) := {
+theorem metric_opensets_is_topology [DistanceSpace D] {d: X → X → D} (hd: IsMetric d): IsTopology (metric_opensets d) := {
   sUnion := by intro; exact metric_open_sUnion
   finite_sInter := by intro; exact metric_open_finite_sInter hd
 }
 
 -- given a metric on X, put a topology on X
-def metric_to_topology (M: Metric X): Topology X := {
-  opensets := metric_opensets M.dist
-  is_topology := metric_opensets_is_topology M.is_metric
+def metric_to_topology [DistanceSpace D] (d: Metric X D): Topology X := {
+  opensets := metric_opensets d.distance
+  is_topology := metric_opensets_is_topology d.is_metric
 }
 
-def metric_space_to_topological_space (X: MetricSpace): TopologicalSpace := {
-  points := X.points
-  topology := metric_to_topology X.metric
-}
-
--- unsure how to go about this, the naming is getting messy
-def metrizable (𝒯: Topology X): Prop :=
-  ∃ d: Metric X, metric_to_topology d = 𝒯
+def metrizable (𝒯: Topology X) (D: Type*) [DistanceSpace D]: Prop :=
+  ∃ d: Metric X D, metric_to_topology d = 𝒯
 
 -- the Sierpiński topology define on Bool with {true} open
 def sierpiński_opensets: Set (Set Bool) :=
@@ -601,6 +680,10 @@ def sierpiński_topology: Topology Bool := {
   opensets := sierpiński_opensets
   is_topology := sierpiński_is_topology
 }
+
+
+
+
 
 -- Definition: ℬ is a base for 𝒯 if every open set of 𝒯 is a union of sets from ℬ
 def base (𝒯 ℬ: Set (Set X)): Prop :=
@@ -673,7 +756,7 @@ theorem indiscrete_base (X: Type*): base {∅, @Set.univ X} {@Set.univ X} := by
     | Or.inr _ => exists {Set.univ}; simp_all
 
 -- The set of open balls is a base for the metric topology
-theorem metric_openballs_base {d: X → X → ENNReal} (hd: IsMetric d): base (metric_opensets d) (openballs d) := by
+theorem metric_openballs_base [DistanceSpace D] {d: X → X → D} (hd: IsMetric d): base (metric_opensets d) (openballs d) := by
   apply (base_iff _ _).mpr
   constructor
   · exact openballs_sub_opensets hd
@@ -682,7 +765,7 @@ theorem metric_openballs_base {d: X → X → ENNReal} (hd: IsMetric d): base (m
     exists openball d x r
     repeat' (apply And.intro)
     · simp [openballs]
-    · exact (openball_mem_iff hd x).mpr hr1
+    · exact (openball_mem_iff hd.dist_self_bot x r).mpr hr1
     · exact hr2
 
 -- sierpiński base
@@ -821,6 +904,10 @@ theorem is_base_iff_base_conditions (ℬ: Set (Set X)): is_base ℬ ↔ base_con
 
 -- TODO: suppose T is generated by B. Then U is open iff. forall x in U, exists B in B, x in B sub U.
 
+
+
+
+
 def neighborhood (𝒯: Set (Set X)) (N: Set X) (x: X): Prop :=
   ∃ U ∈ 𝒯, x ∈ U ∧ U ⊆ N
 
@@ -930,6 +1017,10 @@ theorem neighborhood_axioms_unique_topology (𝒩: X → Set (Set X)) (h𝒩: ne
 -- TODO: define neighrbohood topology
 
 -- TODO: fundamental neighborhood system aka neighborhood basis
+
+
+
+
 
 def interior_point (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
   neighborhood 𝒯 A x
@@ -1177,7 +1268,7 @@ theorem frontier_empty {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): frontier �
   simp [frontier_eq, closure_empty h𝒯]
 
 -- in a metric space, the frontier of the open ball is the sphere
-theorem frontier_openball {d: X → X → ENNReal} (hd: IsMetric d) (x: X) (r: ENNReal): frontier (metric_opensets d) (openball d x r) = sphere d x r := by
+theorem frontier_openball [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) (r: D): frontier (metric_opensets d) (openball d x r) = sphere d x r := by
   sorry
 
 -- in the discrete topology, the frontier of every set is empty
@@ -1212,6 +1303,10 @@ theorem closure_eq_interior_union_frontier (𝒯: Set (Set X)) (A: Set X): closu
 
 theorem interior_eq_set_minus_frontier (𝒯: Set (Set X)) (A: Set X): interior 𝒯 A = A \ frontier 𝒯 A := by
   sorry
+
+
+
+
 
 def dense (𝒯: Set (Set X)) (A: Set X): Prop :=
   ∀ U ∈ 𝒯, Set.Nonempty U → Set.Nonempty (A ∩ U)
@@ -1275,6 +1370,10 @@ theorem dense_antimono {𝒯₁ 𝒯₂: Set (Set X)} (h1: 𝒯₁ ⊆ 𝒯₂) 
 
 -- example: Z is dense in the topology generated by [a,infty)
 
+
+
+
+
 -- fréchet and hausdorff spaces
 def fréchet (𝒯: Set (Set X)): Prop :=
   ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ x ∉ V ∧ y ∉ U
@@ -1337,7 +1436,7 @@ theorem sierpiński_nonhausdorff: ¬hausdorff (sierpiński_topology.opensets) :=
     simp_all
 
 -- If r > 0 then B(x, r) is a neighborhood of x. TODO: move somewhere else
-theorem openball_neighborhood {d: X → X → ENNReal} (hd: IsMetric d) (x: X) {r: ENNReal} (hr: 0 < r): neighborhood (metric_opensets d) (openball d x r) x := by
+theorem openball_neighborhood [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) {r: D} (hr: 0 < r): neighborhood (metric_opensets d) (openball d x r) x := by
   exists (openball d x r)
   sorry
   -- repeat' constructor
@@ -1346,13 +1445,13 @@ theorem openball_neighborhood {d: X → X → ENNReal} (hd: IsMetric d) (x: X) {
   -- · sorry -- exact?
 
 -- simple lemma: if balls are too far apart, their intersection is empty.
-lemma separated_balls {d: X → X → ENNReal} (hd: IsMetric d) {x1 x2: X} {r1 r2: ENNReal} (h: r1 + r2 ≤ d x1 x2): Disjoint (openball d x1 r1) (openball d x2 r2) := by
+lemma separated_balls [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) {x1 x2: X} {r1 r2: D} (h: r1 + r2 ≤ d x1 x2): Disjoint (openball d x1 r1) (openball d x2 r2) := by
   apply Set.disjoint_iff.mpr
   intro x ⟨hx1, hx2⟩
   apply not_lt_of_ge h
   calc
     d x1 x2 ≤ d x1 x + d x x2 := by exact hd.triangle x1 x x2
-          _ = d x1 x + d x2 x := by rw [hd.symm x x2]
+          _ = d x1 x + d x2 x := by rw [hd.symmetric x x2]
           _ < r1 + r2 := by sorry -- exact? -- add_lt_add hx1 hx2
 
 -- Every metric space is hausdorff.
@@ -1360,23 +1459,22 @@ lemma separated_balls {d: X → X → ENNReal} (hd: IsMetric d) {x1 x2: X} {r1 r
 theorem metric_space_hausdorff {d: X → X → ENNReal} (hd: IsMetric d): hausdorff (metric_opensets d) := by
   intro x y neq
   let r := d x y / 2
-  have r_pos: 0 < r := by sorry -- exact? --half_pos ((neq_dist_pos hd x y).mp neq)
+  have: d x y ≠ 0 := (dist_nonzero_iff hd).mpr neq
+  have r_pos: 0 < r := ENNReal.half_pos this
   exists openball d x r, openball d y r
   repeat' (apply And.intro)
   · exact openball_neighborhood hd x r_pos
   · exact openball_neighborhood hd y r_pos
-  · apply separated_balls hd
-    sorry -- simp [add_halves, r]
-
+  · simp [separated_balls hd, r]
 
 -- If a space is not hausdorff, it is not metrizable
-theorem nonhausdorff_nonmetrizable {𝒯: Topology X} (h: ¬ hausdorff 𝒯.opensets): ¬ metrizable 𝒯 := by
+theorem nonhausdorff_nonmetrizable {𝒯: Topology X} (h: ¬ hausdorff 𝒯.opensets): ¬ metrizable 𝒯 ENNReal := by
   intro ⟨d, hd⟩
   rw [←hd] at h
   exact h (metric_space_hausdorff d.is_metric)
 
 -- corollary: sierpiński space is nonmetrizable!
-theorem sierpiński_nonmetrizable: ¬ metrizable sierpiński_topology := by
+theorem sierpiński_nonmetrizable: ¬ metrizable sierpiński_topology ENNReal := by
   exact nonhausdorff_nonmetrizable sierpiński_nonhausdorff
 
 -- TODO
@@ -1398,6 +1496,10 @@ theorem LCRI_base_is_base: is_base LCRI_base := by
 theorem frechet_iff' (T: Set (Set X)): fréchet T ↔ ∀ x, {x} = Set.sInter (Nbhds T x) := by
   sorry
 
+
+
+
+
 def subspace_topology (T: Set (Set X)) (A: Set X): Set (Set X) :=
   {A ∩ U | U ∈ T}
 
@@ -1413,38 +1515,46 @@ theorem subspace_topology_is_topology (T: Set (Set X)) (A: Set X) (hT: IsTopolog
 -- equivalence of metrics
 
 -- diagonal is closed iff hausdorff
-def diagonal (X: Type u): Set (X × X) :=
+def diagonal (X: Type*): Set (X × X) :=
   Set.image (fun x => (x, x)) Set.univ
 
 theorem hausdorff_iff_diagonal_closed (T: Set (Set (X × X))): hausdorff T ↔ closedset T (diagonal X) := by
   sorry
 
+
+
+
+
 -- continuity
-def continuous_at {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y) (x: X): Prop :=
+def continuous_at (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y) (x: X): Prop :=
   ∀ N' ∈ Nbhds TY (f x), ∃ N ∈ Nbhds TX x, f '' N ⊆ N'
 
-def continuous {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): Prop :=
+def continuous (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): Prop :=
   ∀ x, continuous_at TX TY f x
 
-def continuous_iff_open_preimage_open {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): continuous TX TY f ↔ ∀ V ∈ TY, Set.preimage f V ∈ TX := by
+def continuous_iff_open_preimage_open (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): continuous TX TY f ↔ ∀ V ∈ TY, Set.preimage f V ∈ TX := by
   sorry
 
-def continuous_iff_closed_preimage_closed {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): continuous TX TY f ↔ ∀ F ∈ closedsets TY, Set.preimage f F ∈ closedsets TX := by
+def continuous_iff_closed_preimage_closed (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): continuous TX TY f ↔ ∀ F ∈ closedsets TY, Set.preimage f F ∈ closedsets TX := by
   sorry
 
-def continuous_iff_image_closure_subseteq_closure_image {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): continuous TX TY f ↔ ∀ A: Set X, Set.image f (closure TX A) ⊆ closure TY (Set.image f A) := by
+def continuous_iff_image_closure_subseteq_closure_image (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): continuous TX TY f ↔ ∀ A: Set X, Set.image f (closure TX A) ⊆ closure TY (Set.image f A) := by
   sorry
 
-noncomputable def Function.Inverse {X Y: Type} {f: X → Y} (h: Function.Bijective f): Y → X :=
+
+
+
+
+noncomputable def Function.Inverse {f: X → Y} (h: Function.Bijective f): Y → X :=
   Classical.choose (Function.bijective_iff_has_inverse.mp h)
 
 -- homeomorphisms
-structure homeomorphism {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): Prop where
+structure homeomorphism (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): Prop where
   bijection: Function.Bijective f
   continuous_forward: continuous TX TY f
   continuous_inverse: continuous TY TX (Function.Inverse bijection)
 
-def homeomorphic {X Y: Type} (TX: Set (Set X)) (TY: Set (Set Y)): Prop :=
+def homeomorphic (TX: Set (Set X)) (TY: Set (Set Y)): Prop :=
   ∃ f, homeomorphism TX TY f
 
 -- this definition doesn't care about underlying type of points
@@ -1464,25 +1574,43 @@ def connected_space (X: TopologicalSpace): Prop :=
 -- connectedness is a topological property
 theorem connected_topological_property: topological_property connected_space := by
   intro X Y h hX U V hU1 hV1 hU2 hV2 hUV
-  -- lol
-  sorry
-
+  sorry -- lol
 
 -- let f: X → Y be a homeomorphism. Then f induces a homeomorphism X \ A -> Y \ f(A)
 
--- limit of a sequence
-def limit (T: Set (Set X)) (x: Nat → X) (l: X): Prop :=
-  ∀ N ∈ Nbhds T l, ∃ n0: Nat, ∀ n: Nat, n0 ≤ n → x n ∈ N
+
+
+
+
+-- limit of a sequence in terms of the tail
+def tail (x: Nat → X) (t: Nat): Nat → X :=
+  fun n => x (t + n)
+
+def converges (T: Set (Set X)) (x: Nat → X) (l: X): Prop :=
+  ∀ N ∈ Nbhds T l, ∃ t: Nat, Set.range (tail x t) ⊆ N
+
+def convergent (T: Set (Set X)) (x: Nat → X): Prop :=
+  ∃ l, converges T x l
+
+def converges_distance [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X) (l: X): Prop :=
+  ∀ r, ⊥ < r → ∃ t, Set.range (tail x t) ⊆ openball d l r
+
+def convergent_distance [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X): Prop :=
+  ∃ l, converges_distance d x l
+
+-- equivalent definition in a metric space
+theorem limit_metric_iff [DistanceSpace D] (d: X → X → D) (x: Nat → X) (l: X): converges (metric_opensets d) x l ↔ converges_distance d x l := by
+  sorry
 
 def adherent_value (T: Set (Set X)) (x: Nat → X) (a: X): Prop :=
-  ∀ N ∈ Nbhds T a, ∀ n0: Nat, ∃ n: Nat, n0 ≤ n ∧ x n ∈ N
+  ∀ N ∈ Nbhds T a, ∀ t, (Set.range (tail x t) ∩ N).Nonempty
 
 -- defn of a subsequence
 
 -- a is adherent iff exists subsequence converging to a
 
 -- limits are unique in a hausdorff space
-theorem hausdorff_limit_unique (T: Set (Set X)) (h: hausdorff T) (x: Nat → X) (l1 l2: X) (h1: limit T x l1) (h2: limit T x l2): l1 = l2 := by
+theorem hausdorff_limit_unique (T: Set (Set X)) (h: hausdorff T) (x: Nat → X) (l1 l2: X) (h1: converges T x l1) (h2: converges T x l2): l1 = l2 := by
   sorry
 
 -- prop: adherent points preserved by sequences
@@ -1491,37 +1619,120 @@ theorem hausdorff_limit_unique (T: Set (Set X)) (h: hausdorff T) (x: Nat → X) 
 
 -- defn of countable/denumerable set
 
--- to define diameter we need extended nonnegative reals...
--- maybe we should use these from the beginning...?
 
+
+
+
+-- diameter of a set
+noncomputable def diameter [CompleteDistanceSpace D] (d: X → X → D) (A: Set X): D :=
+  sSup (⋃ (a ∈ A) (b ∈ A), {d a b})
+
+theorem diameter_monotone [CompleteDistanceSpace D] (d: X → X → D) {A B: Set X} (h: A ⊆ B): diameter d A ≤ diameter d B := by
+  sorry
+
+theorem diameter_singleton [CompleteDistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X): diameter d {x} = 0 := by
+  simp [diameter, hd.dist_self_bot x]
+
+example [CompleteDistanceSpace D] (d: X → X → D): diameter d ∅ = 0 := by
+  simp [diameter]
+
+example [CompleteDistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x y: X): diameter d {x, y} = d x y := by
+  simp [diameter]
+  sorry
+
+example [CompleteDistanceSpace D] (d: X → X → D) (hd: IsMetric d) (x: X) (r: D): diameter d (openball d x r) ≤ 2 • r := by
+  simp [diameter]
+  intros
+  have := hd.triangle
+  sorry
+
+-- a set is bounded if it has finite diameter.
+def bounded [CompleteDistanceSpace D] (d: X → X → D) (A: Set X): Prop :=
+  diameter d A < ⊤
+
+-- a set is boudned iff. it is contained in a ball of finite radius.
+-- maybe closed ball easier.
+theorem bounded_iff [CompleteDistanceSpace D] (d: X → X → D) (A: Set X): bounded d A ↔ ∃ x r, r < ⊤ ∧ A ⊆ openball d x r := by
+  sorry
+
+theorem bounded_subset [CompleteDistanceSpace D] (d: X → X → D) {A B: Set X} (h1: A ⊆ B) (h2: bounded d B): bounded d A := by
+  exact lt_of_le_of_lt (diameter_monotone _ h1) h2
+
+-- TODO if a finite family is all bounded their union is bounded.
+theorem bounded_finite_union [CompleteDistanceSpace D] (d: X → X → D) (F: Set (Set X)) (h1: Finite F) (h2: ∀ A ∈ F, bounded d A): bounded d (⋃₀ F) := by
+  sorry
+
+def totally_bounded [CompleteDistanceSpace D] (d: X → X → D) (A: Set X): Prop :=
+  ∀ ε, ⊥ < ε → ∃ C: Set X, Finite C ∧ A ⊆ ⋃ (x ∈ C), openball d x ε
+
+theorem totally_bounded_bounded [CompleteDistanceSpace D] {d: X → X → D} {A: Set X} (h: totally_bounded d A): bounded d A := by
+  sorry
+
+
+
+
+
+-- cauchy sequence in terms of diameters of tails
+def cauchy [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X): Prop :=
+  ∀ ε, ⊥ < ε → ∃ t, ∀ m n, t ≤ m → t ≤ n → d (x m) (x n) < ε
+
+def cauchy_sequence_diameter [CompleteDistanceSpace D] (d: X → X → D) (x: Nat → X): cauchy d x ↔ ∀ r, ⊥ < r → ∃ t, diameter d (Set.range (tail x t)) < r := by
+  sorry
+
+theorem convergent_cauchy [DistanceSpaceStruct D] {d: X → X → D} {x: Nat → X} (h: convergent_distance d x): cauchy d x := by
+  sorry
+
+example [DistanceSpace D] {d: X → X → D} {x: Nat → X} {a: X} (h1: cauchy d x) (h2: adherent_value (metric_opensets d) x a): converges_distance d x a := by
+  sorry
+
+def complete [DistanceSpaceStruct D] (d: X → X → D): Prop :=
+  ∀ x, cauchy d x → convergent_distance d x
+
+-- If A ⊆ X is complete then it is closed.
+-- todo : use subspace metric?
+example [DistanceSpaceStruct D] (d: X → X → D) (A: Set X) (h: complete (fun (a b: A) => d a b)): metric_closedset d A := by
+  sorry
+
+example [DistanceSpaceStruct D] (d: X → X → D) (A: Set X) (h1: complete d) (h2: metric_closedset d A): complete (fun (a b: A) => d a b) := by
+  sorry
+
+-- If two metrics are uniformly equivalent, then Cauchy iff Cauchy.
+-- Hence complete iff complete.
+
+-- If dX, dY complete then dX x dY (the product metric given by max) is complete
+
+structure Completion [DistanceSpace D] {X0 X1: Type*} (d0: X0 → X0 → D) (d1: X1 → X1 → D) (i: X0 → X1): Prop where
+  isometry: isometry d0 d1 i
+  dense: dense (metric_opensets d1) (Set.range i)
+  complete: complete d1
 
 -- Appendix TODO move
 -- given a metric space, extend to disctance on sets
 
-noncomputable def distance_point_set (d: X → X → ENNReal) (a: X) (B: Set X): ENNReal :=
+noncomputable def distance_point_set [CompleteDistanceSpace D] (d: X → X → D) (a: X) (B: Set X): D :=
   sInf (⋃ (b ∈ B), {d a b})
 
-noncomputable def distance_set_point (d: X → X → ENNReal) (A: Set X) (b: X): ENNReal :=
+noncomputable def distance_set_point [CompleteDistanceSpace D] (d: X → X → D) (A: Set X) (b: X): D :=
   sInf (⋃ (a ∈ A), {d a b})
 
-noncomputable def set_dist (d: X → X → ENNReal) (A B: Set X): ENNReal :=
+noncomputable def set_dist [CompleteDistanceSpace D] (d: X → X → D) (A B: Set X): D :=
   sInf (⋃ (a ∈ A) (b ∈ B), {d a b})
 
-noncomputable def hausdorff_dist (d: X → X → ENNReal) (A B: Set X): ENNReal :=
-  max (sSup ⋃ (x: )) ()
+-- noncomputable def hausdorff_dist (d: X → X → D) (A B: Set X): D :=
+--   max (sSup ⋃ (x: )) ()
 
 
-structure IsPseudoExtendedMetric (d: X → X → ENNReal): Prop where
-  eq: ∀ x, d x x = 0
-  symm: ∀ x y, d x y = d y x
-  triangle: ∀ x y z, d x z ≤ d x y + d y z
+-- structure IsPseudoExtendedMetric (d: X → X → D): Prop where
+--   eq: ∀ x, d x x = 0
+--   symm: ∀ x y, d x y = d y x
+--   triangle: ∀ x y z, d x z ≤ d x y + d y z
 
-example (d: X → X → ENNReal): IsMetric (set_dist d) := {
-  eq_iff := sorry -- fails
-  symm := by
-    intro A B
-    simp [set_dist]
-    sorry
-  triangle := by
-    sorry
-}
+-- example (d: X → X → D): IsMetric (set_dist d) := {
+--   eq_iff := sorry -- fails
+--   symm := by
+--     intro A B
+--     simp [set_dist]
+--     sorry
+--   triangle := by
+--     sorry
+-- }
