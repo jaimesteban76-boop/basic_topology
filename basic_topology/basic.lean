@@ -57,6 +57,7 @@ noncomputable instance: CompleteDistanceSpace ENNReal := {}
 
 
 
+
 /-
 
 Three version of a metric space:
@@ -1538,14 +1539,12 @@ theorem connected_topological_property: topological_property connected_space := 
 
 
 
-
-
 -- limit of a sequence in terms of the tail
 def tail (x: Nat → X) (t: Nat): Nat → X :=
   fun n => x (t + n)
 
 def converges (T: Set (Set X)) (x: Nat → X) (l: X): Prop :=
-  ∀ N ∈ Nbhds T l, ∃ t: Nat, Set.range (tail x t) ⊆ N
+  ∀ N ∈ Nbhds T l, ∃ t, Set.range (tail x t) ⊆ N
 
 def convergent (T: Set (Set X)) (x: Nat → X): Prop :=
   ∃ l, converges T x l
@@ -1586,12 +1585,10 @@ theorem hausdorff_limit_unique (T: Set (Set X)) (h: hausdorff T) (x: Nat → X) 
 -- defn of countable/denumerable set
 
 
-
-
-
 -- diameter of a set
 noncomputable def diameter [CompleteDistanceSpace D] (d: X → X → D) (A: Set X): D :=
   sSup (⋃ (a ∈ A) (b ∈ A), {d a b})
+
 
 theorem diameter_monotone [CompleteDistanceSpace D] (d: X → X → D) {A B: Set X} (h: A ⊆ B): diameter d A ≤ diameter d B := by
   sorry
@@ -1641,6 +1638,10 @@ theorem totally_bounded_bounded [CompleteDistanceSpace D] {d: X → X → D} {A:
 -- cauchy sequence in terms of diameters of tails
 def cauchy [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X): Prop :=
   ∀ ε, ⊥ < ε → ∃ t, ∀ m n, t ≤ m → t ≤ n → d (x m) (x n) < ε
+
+def cauchy_with_top [CompleteDistanceSpace D] (d: X → X → D) (x: Nat → X): Prop :=
+  ∀ ε, ⊥ < ε → ∃ t, diameter d (Set.range (tail x t)) < ε
+
 
 def cauchy_sequence_diameter [CompleteDistanceSpace D] (d: X → X → D) (x: Nat → X): cauchy d x ↔ ∀ r, ⊥ < r → ∃ t, diameter d (Set.range (tail x t)) < r := by
   sorry
