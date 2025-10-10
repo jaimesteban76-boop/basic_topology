@@ -5,10 +5,13 @@ defaultTargets = ["basic_topology"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
-autoImplicit = false
-relaxedAutoImplicit = false
+autoImplicit = true
+relaxedAutoImplicit = true
 weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
+linter.style.commandStart = false
+linter.style.longLine = false
+linter.dupNamespace = false
 
 [[require]]
 name = "mathlib"

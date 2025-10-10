@@ -1,1 +1,5 @@
-import basic_topology.basic
+import basic_topology.T0_topology
+import basic_topology.T1_metric
+import basic_topology.T2_separation
+import basic_topology.T3_sequences
+import basic_topology.T4_completion
