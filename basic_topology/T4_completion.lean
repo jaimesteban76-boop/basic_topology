@@ -38,7 +38,15 @@ example [DistanceSpaceStruct D] (d: X → X → D) (A: Set X) (h1: complete d) (
 
 -- If dX, dY complete then dX x dY (the product metric given by max) is complete
 
-structure Completion [DistanceSpace D] {X0 X1: Type*} (d0: X0 → X0 → D) (d1: X1 → X1 → D) (i: X0 → X1): Prop where
-  isometry: isometry d0 d1 i
-  dense: dense (metric_opensets d1) (Set.range i)
-  complete: complete d1
+structure Completion [DistanceSpace D] {X X': Type*} (d: X → X → D) (d': X' → X' → D) (i: X → X'): Prop where
+  isometry: isometry d d' i
+  dense: dense (metric_opensets d') (Set.range i)
+  complete: complete d'
+
+
+example {X X0 X1: Type*} [DistanceSpace D] (d: X → X → D)
+  (d0: X0 → X0 → D) (d1: X1 → X1 → D)
+  (i0: X → X0) (i1: X → X1)
+  (h0: Completion d d0 i0) (h1: Completion d d1 i1):
+  ∃! f: X0 → X1, isometric_isomorphism d0 d1 f := by
+  sorry

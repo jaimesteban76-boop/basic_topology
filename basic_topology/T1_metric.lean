@@ -205,7 +205,8 @@ theorem isometry_is_injective [DistanceSpaceStruct D] {dX: X → X → D} {dY: Y
   rw [hf, ←h]
   apply hY.dist_self_bot
 
-
+def isometric_isomorphism (dX: X → X → D) (dY: Y → Y → D) (f: X → Y): Prop :=
+  isometry dX dY f ∧ Function.Bijective f
 
 
 
