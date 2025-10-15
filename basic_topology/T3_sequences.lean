@@ -17,6 +17,11 @@ import Mathlib.Data.ENNReal.Inv
 
 import basic_topology.T2_separation
 
+set_option linter.style.commandStart false
+set_option linter.style.longLine false
+set_option linter.dupNamespace false
+set_option linter.style.multiGoal false
+
 
 
 
@@ -41,17 +46,36 @@ def convergent_distance [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X
   ∃ l, converges_distance d x l
 
 -- equivalent definition in a metric space
-theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (x: Nat → X) (l: X): converges (metric_opensets d) x l ↔ converges_distance d x l := by
+theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetric d)(x: Nat → X) (l: X): converges (metric_opensets d) x l ↔ converges_distance d x l := by
   constructor
   intro h r hr
   let N := openball d l r
-  have: N ∈ Nbhds (metric_opensets d) l := by
-    simp [Nbhds]
-    simp [metric_opensets]
-    sorry
-  sorry
-  sorry
-
+  have h1 : N ∈ Nbhds (metric_opensets d) l := by
+    apply openball_neighborhood
+    exact hd
+    exact hr
+  apply h
+  exact h1
+  intro h
+  simp [converges]
+  intro N hN
+  simp[converges_distance] at h
+  simp[Nbhds,neighborhood, metric_opensets,metric_openset] at hN
+  obtain ⟨ U,hU⟩ := hN
+  have h3: ∃r>0, openball d l r ⊆ U:= by
+    apply hU.left
+    exact hU.right.left
+  obtain ⟨ R,hR⟩ := h3
+  have: R>0:= by
+    exact hR.left
+  apply h at this
+  obtain ⟨ t,ht⟩ := this
+  use t
+  intro x hx
+  apply hU.right.right
+  apply hR.right
+  apply ht
+  exact hx
 def adherent_value (T: Set (Set X)) (x: Nat → X) (a: X): Prop :=
   ∀ N ∈ Nbhds T a, ∀ t, (Set.range (tail x t) ∩ N).Nonempty
 
