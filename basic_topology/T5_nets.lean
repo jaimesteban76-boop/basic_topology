@@ -33,3 +33,9 @@ structure net (X : Type u) where
   (R : Relation D D)
   [is_directed : directed_set D R]
   (a : D → X)
+
+/-- A net `n` converges to `x` with respect to the topology `𝒯`
+iff every open neighborhood of `x` eventually contains all later terms of the net. -/
+def net_converges {X : Type u} (𝒯 : Topology X) (n : net X) (x : X) : Prop :=
+  ∀ U : Set X, (U ∈ 𝒯.opensets) → (x ∈ U) →
+    ∃ i₀ : n.D, ∀ j : n.D, n.R i₀ j → n.a j ∈ U
