@@ -22,12 +22,12 @@ structure IsTopology (𝒯: Set (Set X)): Prop where
   sUnion: ∀ 𝒰 ⊆ 𝒯, ⋃₀ 𝒰 ∈ 𝒯
   finite_sInter: ∀ 𝒰 ⊆ 𝒯, Finite 𝒰 → ⋂₀ 𝒰 ∈ 𝒯
 
-structure Topology (X: Type*) where
+structure Topology (X: Type u) where
   opensets: Set (Set X)
   is_topology: IsTopology opensets
 
-structure TopologicalSpace where
-  points: Type*
+structure TopologicalSpace: Type (u + 1) where
+  points: Type u
   topology: Topology points
 
 theorem empty_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): ∅ ∈ 𝒯 := by
@@ -645,28 +645,29 @@ def closure (𝒯: Set (Set X)) (A: Set X): Set X :=
 -- Lets us prove results about closure in terms of interior
 -- TODO: this proof is ugly!
 theorem closure_eq (𝒯: Set (Set X)) (A: Set X): closure 𝒯 A = (interior 𝒯 Aᶜ)ᶜ := by
-  ext
+  ext x
   constructor
   · intro hx
     simp_all [interior, neighborhood, interior_point]
     intro U h1 h2 h3
     have := hx U (open_neighborhood 𝒯 h2 h1)
-    have: U ∩ A = ∅ := by -- this should be easier..
+    have: U ∩ A = ∅ := by
       ext
       constructor
       · intro ⟨hz1, hz2⟩
         exact h3 hz1 hz2
       · exact False.elim
-    sorry -- contradiction
-  · sorry
-    -- intro hx N hN h
-    -- obtain ⟨U, hU₁, hU₂, hU₃⟩ := hN
-    -- simp_all [interior, neighborhood, interior_point]
-    -- apply hx U hU₁ hU₂
-    -- intro _ hz1 hz2
-    -- have := Set.mem_inter (hU₃ hz1) hz2
-    -- rw [h] at this
-    -- contradiction
+    simp_all [Set.not_nonempty_empty]
+  · intro hx N hN
+    simp_all [interior, neighborhood, interior_point]
+    obtain ⟨U, hU₁, hU₂, hU₃⟩ := hN
+    have := hx U hU₁ hU₂
+    have: ∃ x, x ∈ U ∧ x ∉ Aᶜ := by exact Set.not_subset.mp (hx U hU₁ hU₂)
+    obtain ⟨x, hx1, hx2⟩ := this
+    exists x
+    constructor
+    exact hU₃ hx1
+    exact Set.not_notMem.mp hx2
 
 theorem closure_empty {𝒯: Set (Set X)} (h: IsTopology 𝒯): closure 𝒯 ∅ = ∅ := by
   simp [closure_eq, interior_univ h]
@@ -757,7 +758,7 @@ theorem frontier_closure_eq (𝒯: Set (Set X)) (A: Set X): frontier 𝒯 (closu
     frontier 𝒯 (closure 𝒯 A) = closure 𝒯 (closure 𝒯 A) ∩ closure 𝒯 (closure 𝒯 A)ᶜ := by rw [frontier_eq]
                            _ = closure 𝒯 A ∩ closure 𝒯 (closure 𝒯 A)ᶜ := by rw [closure_idempotent]
                            _ = closure 𝒯 A ∩ closure 𝒯 (interior 𝒯 Aᶜ) := by rw [compl_closure_eq_interior_compl]
-                           _ = closure 𝒯 A ∩ closure 𝒯 Aᶜ := by sorry
+                           _ = closure 𝒯 A ∩ closure 𝒯 Aᶜ := sorry
                            _ = frontier 𝒯 A := by rw [frontier_eq]
 
 theorem frontier_closed (𝒯: Set (Set X)) (A: Set X): closedset 𝒯 (frontier 𝒯 A) := by
@@ -797,7 +798,7 @@ theorem interior_frontier_exterior_partition (𝒯: Set (Set X)) (A: Set X):
   · sorry
 
 -- in the discrete topology, the exterior of a set is its complement
-theorem discrete_exterior (𝒯: Set (Set X)) (A: Set X): exterior Set.univ A = Aᶜ := by
+theorem discrete_exterior (A: Set X): exterior Set.univ A = Aᶜ := by
   simp [exterior_eq, closure_eq, discrete_interior]
 
 theorem closure_eq_interior_union_frontier (𝒯: Set (Set X)) (A: Set X): closure 𝒯 A = interior 𝒯 A ∪ frontier 𝒯 A := by
@@ -961,4 +962,34 @@ def connected_space (X: TopologicalSpace): Prop :=
 -- connectedness is a topological property
 theorem connected_topological_property: topological_property connected_space := by
   intro X Y h hX U V hU1 hV1 hU2 hV2 hUV
-  sorry -- lol
+  sorry
+
+
+
+-- Binary product topology
+
+def product_topology (TX: Set (Set X)) (TY: Set (Set Y)): Set (Set (X × Y)) :=
+  sorry
+
+theorem product_topology_is_topology {TX: Set (Set X)} {TY: Set (Set Y)} (hTX: IsTopology TX) (hTY: IsTopology TY):
+  IsTopology (product_topology TX TY) :=
+  sorry
+
+-- Product of open sets is open
+
+theorem product_topology_product_open {TX: Set (Set X)} {TY: Set (Set Y)} (hTX: IsTopology TX) (hTY: IsTopology TY)
+  {U: Set X} (hU: U ∈ TX) {V: Set Y} (hV: V ∈ TY):
+  {(x, y): X × Y | x ∈ U ∧ y ∈ V} ∈ product_topology TX TY :=
+  sorry
+
+-- Projections are open
+
+theorem product_topology_left_projection_open {TX: Set (Set X)} {TY: Set (Set Y)} (hTX: IsTopology TX) (hTY: IsTopology TY)
+  {U: Set (X × Y)} (hU: U ∈ product_topology TX TY):
+  (fun x => x.1) '' U ∈ TX :=
+  sorry
+
+theorem product_topology_right_projection_open {TX: Set (Set X)} {TY: Set (Set Y)} (hTX: IsTopology TX) (hTY: IsTopology TY)
+  {U: Set (X × Y)} (hU: U ∈ product_topology TX TY):
+  (fun x => x.2) '' U ∈ TY :=
+  sorry

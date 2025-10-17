@@ -140,13 +140,26 @@ theorem frechet_iff' (T: Set (Set X)): fréchet T ↔ ∀ x, {x} = Set.sInter (N
 
 -- equivalence of metrics
 
--- diagonal is closed iff hausdorff
-def diagonal (X: Type*): Set (X × X) :=
-  Set.image (fun x => (x, x)) Set.univ
-
-theorem hausdorff_iff_diagonal_closed (T: Set (Set (X × X))): hausdorff T ↔ closedset T (diagonal X) := by
-  sorry
-
+theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausdorff T ↔ closedset (product_topology T T) (Set.diagonal X) := by
+  constructor
+  intro h
+  rw [closedset, open_iff_neighborhood_of_all_points]
+  intro (x1, x2) hx
+  obtain ⟨N1, N2, hN1, hN2, hN⟩ := h x1 x2 hx
+  obtain ⟨U1, hU1⟩ := hN1
+  obtain ⟨U2, hU2⟩ := hN2
+  exists {(x1, x2): X × X | x1 ∈ U1 ∧ x2 ∈ U2}
+  repeat' (apply And.intro)
+  exact product_topology_product_open hT hT hU1.1 hU2.1
+  exact hU1.2.1
+  exact hU2.2.1
+  intro (z1, z2) hz
+  simp_all [ Set.diagonal]
+  have: Disjoint U1 U2 := by sorry -- obvious
+  intro h
+  rw [←h] at hz
+  have: z1 ∈ U1 ∩ U2 := by exact hz
+  sorry -- obvious.. why is `Disjoint` so hard to work with T_T
 
 theorem continuous_extension_dense_domain_unique {TX: Set (Set X)} {TY: Set (Set Y)} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
   sorry
