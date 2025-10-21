@@ -483,10 +483,27 @@ theorem neighborhood_upward_closed {𝒯: Set (Set X)} (x: X) {A B: Set X} (h1: 
   · exact le_trans hU3 h2
 
 -- N2: every finite intersection of neighborhoods is a neighborhood
-theorem neighborhood_finite_inter {𝒯: Set (Set X)} (x: X) (𝒩: Set (Set X)) (h1: 𝒩 ⊆ Nbhds 𝒯 x) (h2: Finite 𝒩): ⋂₀ 𝒩 ∈ Nbhds 𝒯 x := by
-  sorry
+theorem neighborhood_binary_inter {𝒯: Set (Set X)}(x: X) (A: Set X)(h𝒯: IsTopology 𝒯) (B: Set X) (hA: A∈ Nbhds 𝒯 x)(hB: B∈Nbhds 𝒯 x): A∩B ∈ Nbhds 𝒯 x := by
+  simp_all [Nbhds,neighborhood]
+  obtain ⟨ U,⟨hU1,hU2,hU3⟩⟩  := hA
+  obtain ⟨ V,⟨hV1,hV2,hV3⟩⟩ := hB
+  use U∩V
+  repeat constructor
+  exact binary_inter_open h𝒯 hU1 hV1
+  constructor
+  exact Set.mem_inter hU2 hV2
+  constructor
+  have: U∩V⊆ U:= by exact Set.inter_subset_left
+  exact fun ⦃a⦄ a_1 ↦ hU3 (this a_1)
+  have : U∩V⊆ V:= by exact Set.inter_subset_right
+  exact fun ⦃a⦄ a_1 ↦ hV3 (this a_1)
+
+
+theorem neighborhood_finite_inter {𝒯: Set (Set X)} (x: X) (𝒩: Set (Set X))(h1: 𝒩 ⊆ Nbhds 𝒯 x) (h2: Finite 𝒩): ⋂₀ 𝒩 ∈ Nbhds 𝒯 x := by
+sorry
 
 -- N3: x belongs to all its neighborhoods
+
 theorem neighborhood_mem {𝒯: Set (Set X)} {x: X} {N: Set X} (h: neighborhood 𝒯 N x): x ∈ N := by
   obtain ⟨_, _, hU2, hU3⟩ := h
   exact hU3 hU2
