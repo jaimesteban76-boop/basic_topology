@@ -321,6 +321,13 @@ def unions (ℬ: Set (Set X)): Set (Set X) :=
   ⋃ 𝒰 ⊆ ℬ, {⋃₀ 𝒰}
 
 -- some simple theorems about `unions`
+theorem unions_mem (ℬ: Set (Set X)) {U: Set X} (hU: U ∈ ℬ): U ∈ unions ℬ := by
+  simp [unions]
+  exists {U}
+  constructor
+  exact Set.singleton_subset_iff.mpr hU
+  exact Eq.symm (Set.sUnion_singleton U)
+
 theorem unions_sub (ℬ: Set (Set X)): ℬ ⊆ unions ℬ := by
   intro U _
   simp [unions]
@@ -373,15 +380,19 @@ theorem base_iff_unions {𝒯 ℬ: Set (Set X)}: base 𝒯 ℬ ↔ ℬ ⊆ 𝒯 
   · sorry
 
 -- ℬ is a base iff. `unions ℬ` is a topology.
-theorem is_base_iff_unions_topology (ℬ: Set (Set X)): is_base ℬ ↔ IsTopology (unions ℬ) := by
-  --simp [unions]
+theorem is_base_iff_unions_topology {ℬ: Set (Set X)}: is_base ℬ ↔ IsTopology (unions ℬ) := by
   apply Iff.intro
   · intro ⟨𝒯, h𝒯₁, h𝒯₂, h𝒯₃⟩
     have: 𝒯 = unions ℬ := by
       apply le_antisymm
-
-
-      sorry -- exact?
+      intro U hU
+      obtain ⟨𝒰, h𝒰⟩ := h𝒯₃ U hU
+      rw [h𝒰.2]
+      simp [unions]
+      exists 𝒰
+      constructor
+      exact h𝒰.1
+      rfl
       rw [unions_topology h𝒯₁]
       exact unions_mono h𝒯₂
     rw [←this]
@@ -395,10 +406,10 @@ theorem is_base_iff_unions_topology (ℬ: Set (Set X)): is_base ℬ ↔ IsTopolo
       · simp [unions]
 
 structure base_conditions (ℬ: Set (Set X)): Prop where
-  B1: X = ⋃₀ ℬ
+  B1: ⋃₀ ℬ = ⊤
   B2: ∀ B' ∈ ℬ, ∀ B'' ∈ ℬ, ∀ x ∈ B' ∩ B'', ∃ B ∈ ℬ, x ∈ B ∧ B ⊆ B' ∩ B''
 
-theorem is_base_iff_base_conditions (ℬ: Set (Set X)): is_base ℬ ↔ base_conditions ℬ := by
+theorem is_base_iff_base_conditions {ℬ: Set (Set X)}: is_base ℬ ↔ base_conditions ℬ := by
   constructor
   · intro ⟨T, hT₁, hT₂⟩
     constructor
@@ -981,23 +992,82 @@ theorem connected_topological_property: topological_property connected_space := 
   intro X Y h hX U V hU1 hV1 hU2 hV2 hUV
   sorry
 
+def subset_embed (A: Set X) (U: Set A): Set X :=
+  Subtype.val '' U
 
+def subfamily_embed (A: Set X) (T: Set (Set A)):
+  Set (Set X) :=
+  sorry
+
+
+-- subspace topology
+def subspace (T: Set (Set X)) (A: Set X): Set (Set A) :=
+  (fun U => Subtype.val ⁻¹' (U ∩ A)) '' T
+
+-- basic helpers
+theorem subspace_open_iff (T: Set (Set X)) (A: Set X) (V: Set A):
+  V ∈ subspace T A ↔ ∃ U ∈ T, Subtype.val ⁻¹' (U ∩ A) = V := by
+  simp [subspace]
+
+theorem subspace_open (T: Set (Set X)) (A: Set X) {U: Set X} (hU: U ∈ T):
+  Subtype.val ⁻¹' (U ∩ A) ∈ subspace T A := by
+  exists U
+
+-- TODO: show if U is open in T then U ∩ A is open in A
+
+theorem subspace_topology_is_topology {T: Set (Set X)} (hT: IsTopology T) (A: Set X):
+  IsTopology (subspace T A) :=
+  sorry
 
 -- Binary product topology
+def product_topology_basis (TX: Set (Set X)) (TY: Set (Set Y)): Set (Set (X × Y)) :=
+  {UV | ∃ U V, U ∈ TX ∧ V ∈ TY ∧ UV = Set.prod U V}
 
 def product_topology (TX: Set (Set X)) (TY: Set (Set Y)): Set (Set (X × Y)) :=
-  sorry
+  unions (product_topology_basis TX TY)
 
-theorem product_topology_is_topology {TX: Set (Set X)} {TY: Set (Set Y)} (hTX: IsTopology TX) (hTY: IsTopology TY):
-  IsTopology (product_topology TX TY) :=
-  sorry
+theorem product_topology_is_topology {TX: Set (Set X)} {TY: Set (Set Y)}
+  (hTX: IsTopology TX) (hTY: IsTopology TY):
+  IsTopology (product_topology TX TY) := by
+  apply is_base_iff_unions_topology.mp
+  apply is_base_iff_base_conditions.mpr
+  constructor
+  · ext x
+    constructor
+    intro; trivial
+    intro
+    exists ⊤
+    constructor
+    exists ⊤, ⊤
+    constructor
+    exact univ_open hTX
+    constructor
+    exact univ_open hTY
+    simp [Set.prod]
+    assumption
+  · intro B₁ hB₁ B₂ hB₂ x hx
+    obtain ⟨U₁, V₁, hUV₁₁, hUV₁₂, hUV₁₃⟩ := hB₁
+    obtain ⟨U₂, V₂, hUV₂₁, hUV₂₂, hUV₂₃⟩ := hB₂
+    exists Set.prod (U₁ ∩ U₂) (V₁ ∩ V₂)
+    constructor
+    exists U₁ ∩ U₂, V₁ ∩ V₂
+    constructor
+    exact binary_inter_open hTX hUV₁₁ hUV₂₁
+    constructor
+    exact binary_inter_open hTY hUV₁₂ hUV₂₂
+    exact rfl
+    constructor
+    simp [Set.prod]
+    repeat constructor
+    repeat simp_all [Set.prod]
 
 -- Product of open sets is open
 
-theorem product_topology_product_open {TX: Set (Set X)} {TY: Set (Set Y)} (hTX: IsTopology TX) (hTY: IsTopology TY)
+theorem product_topology_product_open {TX: Set (Set X)} {TY: Set (Set Y)}
   {U: Set X} (hU: U ∈ TX) {V: Set Y} (hV: V ∈ TY):
-  {(x, y): X × Y | x ∈ U ∧ y ∈ V} ∈ product_topology TX TY :=
-  sorry
+  Set.prod U V ∈ product_topology TX TY := by
+  apply unions_mem
+  exists U, V
 
 -- Projections are open
 
