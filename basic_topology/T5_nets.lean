@@ -54,7 +54,7 @@ theorem neighborhood_direction_directed_set (T: Set (Set X)) (x: X) (hT: IsTopol
   exact neighborhood_binary_inter x N1 hT N2 hN1 hN2
   exact Set.inter_subset_right
 
-theorem continuous_at_iff_all_nets_converge {X: Type u} {TX: Set ( Set X)} {TY: Set (Set Y )} (hTX: IsTopology TX ) (hTY: IsTopology TY) (f:X→ Y) (x0:X):
+theorem continuous_at_iff_all_nets_converge {X: Type u} {TX: Set ( Set X)} {TY: Set (Set Y )} (hTX: IsTopology TX ) (f:X→ Y) (x0:X):
   continuous_at TX TY f x0 ↔ ∀D : Type u , ∀ R: Endorelation D , directed_set R → ∀ x: D → X , net_converges TX R x x0 → net_converges TY R (f∘ x) (f x0):= by
     constructor
     simp[net_converges]
@@ -70,5 +70,31 @@ theorem continuous_at_iff_all_nets_converge {X: Type u} {TX: Set ( Set X)} {TY: 
     apply hN2
     exact Set.mem_image_of_mem f (hi j hrij)
     contrapose
+    rw[continuous_at]
     push_neg
     intro h_con
+    obtain ⟨ N,⟨ h1,h2⟩ ⟩ := h_con
+    simp[Set.not_subset] at h2
+    let D:= { N : Set X // N ∈ Nbhds TX x0 }
+    let R: Endorelation D := fun N1 N2 => N2.1 ⊆ N1.1
+    use D, R
+    constructor
+    apply neighborhood_direction_directed_set
+    exact hTX
+    let x (d : D) : X := Classical.choose (h2 d.1 d.2)
+    have x_prop (d : D) : x d ∈ d.1 ∧ f (x d) ∉ N := Classical.choose_spec (h2 d.1 d.2)
+    use x
+    rw[net_converges]
+    constructor
+    intro U hU
+    use ⟨U, hU⟩
+    intro j hrij
+    exact hrij (x_prop j).1
+    rw[net_converges]
+    push_neg
+    use N
+    constructor
+    exact h1
+    intro i
+    use i
+    exact And.imp_left (fun a ⦃a⦄ a ↦ a) (x_prop i)
