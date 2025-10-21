@@ -374,14 +374,18 @@ theorem base_iff_unions {𝒯 ℬ: Set (Set X)}: base 𝒯 ℬ ↔ ℬ ⊆ 𝒯 
 
 -- ℬ is a base iff. `unions ℬ` is a topology.
 theorem is_base_iff_unions_topology (ℬ: Set (Set X)): is_base ℬ ↔ IsTopology (unions ℬ) := by
-  --simp [unions]
   apply Iff.intro
   · intro ⟨𝒯, h𝒯₁, h𝒯₂, h𝒯₃⟩
     have: 𝒯 = unions ℬ := by
       apply le_antisymm
-
-
-      sorry -- exact?
+      intro U hU
+      obtain ⟨𝒰, h𝒰⟩ := h𝒯₃ U hU
+      rw [h𝒰.2]
+      simp [unions]
+      exists 𝒰
+      constructor
+      exact h𝒰.1
+      rfl
       rw [unions_topology h𝒯₁]
       exact unions_mono h𝒯₂
     rw [←this]
@@ -964,7 +968,32 @@ theorem connected_topological_property: topological_property connected_space := 
   intro X Y h hX U V hU1 hV1 hU2 hV2 hUV
   sorry
 
+def subset_embed (A: Set X) (U: Set A): Set X :=
+  Subtype.val '' U
 
+def subfamily_embed (A: Set X) (T: Set (Set A)):
+  Set (Set X) :=
+  sorry
+
+
+-- subspace topology
+def subspace (T: Set (Set X)) (A: Set X): Set (Set A) :=
+  (fun U => Subtype.val ⁻¹' (U ∩ A)) '' T
+
+-- basic helpers
+theorem subspace_open_iff (T: Set (Set X)) (A: Set X) (V: Set A):
+  V ∈ subspace T A ↔ ∃ U ∈ T, Subtype.val ⁻¹' (U ∩ A) = V := by
+  simp [subspace]
+
+theorem subspace_open (T: Set (Set X)) (A: Set X) {U: Set X} (hU: U ∈ T):
+  Subtype.val ⁻¹' (U ∩ A) ∈ subspace T A := by
+  exists U
+
+-- TODO: show if U is open in T then U ∩ A is open in A
+
+theorem subspace_topology_is_topology {T: Set (Set X)} (hT: IsTopology T) (A: Set X):
+  IsTopology (subspace T A) :=
+  sorry
 
 -- Binary product topology
 

@@ -160,6 +160,8 @@ theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausd
   rw [←h] at hz
   have: z1 ∈ U1 ∩ U2 := by exact hz
   sorry -- obvious.. why is `Disjoint` so hard to work with T_T
+  sorry
+  sorry
 
 theorem continuous_extension_dense_domain_unique {TX: Set (Set X)} {TY: Set (Set Y)} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
   sorry
