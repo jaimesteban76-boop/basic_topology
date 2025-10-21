@@ -14,7 +14,6 @@ Formalization of basic point-set topology.
 import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Data.ENNReal.Basic
 import Mathlib.Data.ENNReal.Inv
-
 import basic_topology.T2_separation
 
 set_option linter.style.commandStart false
@@ -22,13 +21,7 @@ set_option linter.style.longLine false
 set_option linter.dupNamespace false
 set_option linter.style.multiGoal false
 
-
-
-
 variable {X Y D: Type*}
-
-
-
 -- limit of a sequence in terms of the tail
 def tail (x: Nat → X) (t: Nat): Nat → X :=
   fun n => x (t + n)
@@ -85,7 +78,63 @@ def adherent_value (T: Set (Set X)) (x: Nat → X) (a: X): Prop :=
 
 -- limits are unique in a hausdorff space
 theorem hausdorff_limit_unique (T: Set (Set X)) (h: hausdorff T) (x: Nat → X) (l1 l2: X) (h1: converges T x l1) (h2: converges T x l2): l1 = l2 := by
-  sorry
+  by_contra h3
+  simp[converges] at h1
+  simp[converges] at h2
+  simp[hausdorff] at h
+  apply h at h3
+  obtain ⟨U,hu⟩:= h3
+  obtain ⟨ V,hv⟩ := hu.right
+  let hu1:= hu.left
+  apply h1 at hu1
+  let hv1:= hv.left
+  apply h2 at hv1
+  obtain ⟨ t1,ht1⟩ := hu1
+  obtain ⟨ t2,ht2⟩ := hv1
+  set t:= max t1 t2
+  have htu: Set.range (tail x t)⊆ Set.range (tail x t1) := by
+    intro y hy
+    simp[Set.range]
+    simp [Set.range] at hy
+    obtain ⟨ y1,hy1⟩ := hy
+    rw[tail] at hy1
+    simp[tail]
+    have : ∃m, t=m+ t1:= by
+      refine Nat.exists_eq_add_of_le' ?_
+      exact Nat.le_max_left t1 t2
+    obtain ⟨ m,hm⟩ := this
+    use m+y1
+    rw[ Eq.symm (Nat.add_assoc t1 m y1)]
+    rw[Nat.add_comm t1 m]
+    rw[← hm]
+    exact hy1
+  have htv: Set.range (tail x t)⊆ Set.range (tail x t2) := by
+    intro y hy
+    simp[Set.range]
+    simp [Set.range] at hy
+    obtain ⟨ y1,hy1⟩ := hy
+    rw[tail] at hy1
+    simp[tail]
+    have : ∃m, t=m+ t2:= by
+      refine Nat.exists_eq_add_of_le' ?_
+      exact Nat.le_max_right t1 t2
+    obtain ⟨ m,hm⟩ := this
+    use m+y1
+    rw[ Eq.symm (Nat.add_assoc t2 m y1)]
+    rw[Nat.add_comm t2 m]
+    rw[← hm]
+    exact hy1
+  have hu1: Set.range ( tail x t ) ⊆ U := by exact fun ⦃a⦄ a_1 ↦ ht1 (htu a_1)
+  have hv1: Set.range ( tail x t ) ⊆ V := by exact fun ⦃a⦄ a_1 ↦ ht2 (htv a_1)
+  have huv1: ¬ (Disjoint U V) := by
+    refine Set.not_disjoint_iff.mpr ?_
+    use x (t+1)
+    constructor
+    apply hu1
+    simp [Set.range, tail ]
+    apply hv1
+    simp [Set.range, tail ]
+  simp_all
 
 -- prop: adherent points preserved by sequences
 

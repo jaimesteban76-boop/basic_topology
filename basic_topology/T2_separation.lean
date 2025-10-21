@@ -155,11 +155,33 @@ theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausd
   exact hU2.2.1
   intro (z1, z2) hz
   simp_all [ Set.diagonal]
-  have: Disjoint U1 U2 := by sorry -- obvious
+  by_contra hzn
+  have hz1: z1∈ N1 := by
+    apply hU1.2.2
+    exact hz.1
+  have hz2: z2∈ N2:= by
+    apply hU2.2.2
+    exact hz.2
+  have hNN: ¬ (Disjoint N1 N2 ):= by
+    refine Set.not_disjoint_iff.mpr ?_
+    use z1
+    constructor
+    exact hz1
+    rw[hzn]
+    exact hz2
+  simp_all
+  exact product_topology_is_topology hT hT
   intro h
-  rw [←h] at hz
-  have: z1 ∈ U1 ∩ U2 := by exact hz
-  sorry -- obvious.. why is `Disjoint` so hard to work with T_T
+  simp[closedset] at h
+  simp[hausdorff]
+  intro x y hx
+  push_neg at hx
+  have h1: (x,y) ∈ (Set.diagonal X)ᶜ := by exact hx
+  sorry
+--Cannot go any further without defining product topology xD --
+
+
+ -- obvious.. why is `Disjoint` so hard to work with T_T
 
 theorem continuous_extension_dense_domain_unique {TX: Set (Set X)} {TY: Set (Set Y)} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
   sorry
