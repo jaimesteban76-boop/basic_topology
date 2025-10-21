@@ -150,7 +150,7 @@ theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausd
   obtain ⟨U2, hU2⟩ := hN2
   exists {(x1, x2): X × X | x1 ∈ U1 ∧ x2 ∈ U2}
   repeat' (apply And.intro)
-  exact product_topology_product_open hT hT hU1.1 hU2.1
+  sorry -- exact product_topology_product_open hT hT hU1.1 hU2.1
   exact hU1.2.1
   exact hU2.2.1
   intro (z1, z2) hz

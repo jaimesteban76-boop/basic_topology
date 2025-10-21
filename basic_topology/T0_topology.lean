@@ -975,31 +975,48 @@ theorem connected_topological_property: topological_property connected_space := 
   intro X Y h hX U V hU1 hV1 hU2 hV2 hUV
   sorry
 
-def subset_embed (A: Set X) (U: Set A): Set X :=
+-- Given A ⊆ X and U ⊆ A returns U ⊆ X.
+def subspace_up (A: Set X) (U: Set A): Set X :=
   Subtype.val '' U
 
-def subfamily_embed (A: Set X) (T: Set (Set A)):
-  Set (Set X) :=
-  sorry
+-- Given A ⊆ X and U ⊆ X returns U ∩ A ⊆ A.
+def subspace_down (A: Set X) (U: Set X): Set A :=
+  {a | ↑a ∈ U ∩ A}
 
+-- Given A ⊆ X and T ⊆ 𝒫(A) retursn T ⊆ 𝒫(X).
+def supspace (A: Set X) (T: Set (Set A)): Set (Set X) :=
+  {U | subspace_down A U ∈ T}
 
--- subspace topology
-def subspace (T: Set (Set X)) (A: Set X): Set (Set A) :=
-  (fun U => Subtype.val ⁻¹' (U ∩ A)) '' T
+-- Given A ⊆ X and T ⊆ 𝒫(X) retursn T ⊆ 𝒫(A).
+-- i.e. the subspace topology
+def subspace (A: Set X) (T: Set (Set X)): Set (Set A) :=
+  {U | subspace_up A U ∈ T}
 
 -- basic helpers
-theorem subspace_open_iff (T: Set (Set X)) (A: Set X) (V: Set A):
-  V ∈ subspace T A ↔ ∃ U ∈ T, Subtype.val ⁻¹' (U ∩ A) = V := by
-  simp [subspace]
+theorem subspace_open_exists {T: Set (Set X)}
+  {A: Set X} {V: Set A} (hV: V ∈ subspace A T):
+  ∃ U ∈ T, subspace_down A U = V := by
+  simp [subspace_down]
+  exists Subtype.val '' V
+  simp
+  exact hV
 
-theorem subspace_open (T: Set (Set X)) (A: Set X) {U: Set X} (hU: U ∈ T):
-  Subtype.val ⁻¹' (U ∩ A) ∈ subspace T A := by
-  exists U
+theorem subspace_open_if {T: Set (Set X)} (hT: IsTopology T)
+  {A U: Set X} (hA: A ∈ T) (hU: U ∈ T):
+  subspace_down A U ∈ subspace A T := by
+  simp [subspace, subspace_down, subspace_up]
+  simp [Set.image]
+  exact binary_inter_open hT hU hA
+
+-- theorem subspace_open (T: Set (Set X)) (A: Set X) {U: Set X} (hU: U ∈ T):
+--   Subtype.val ⁻¹' (U ∩ A) ∈ subspace T A := by
+--   exists U
+
 
 -- TODO: show if U is open in T then U ∩ A is open in A
 
 theorem subspace_topology_is_topology {T: Set (Set X)} (hT: IsTopology T) (A: Set X):
-  IsTopology (subspace T A) :=
+  IsTopology (subspace A T) := by
   sorry
 
 -- Binary product topology
@@ -1015,22 +1032,21 @@ theorem product_topology_is_topology {TX: Set (Set X)} {TY: Set (Set Y)}
   apply is_base_iff_unions_topology.mp
   apply is_base_iff_base_conditions.mpr
   constructor
-  · ext x
+  · ext
     constructor
-    intro; trivial
-    intro
-    exists ⊤
-    constructor
-    exists ⊤, ⊤
-    constructor
-    exact univ_open hTX
-    constructor
-    exact univ_open hTY
-    simp [Set.prod]
-    assumption
-  · intro B₁ hB₁ B₂ hB₂ x hx
-    obtain ⟨U₁, V₁, hUV₁₁, hUV₁₂, hUV₁₃⟩ := hB₁
-    obtain ⟨U₂, V₂, hUV₂₁, hUV₂₂, hUV₂₃⟩ := hB₂
+    · intro; trivial
+    · intro
+      exists ⊤
+      constructor
+      · exists ⊤, ⊤
+        repeat' constructor
+        · exact univ_open hTX
+        · exact univ_open hTY
+        · simp [Set.prod]
+      ·   assumption
+  · intro _ hB₁ _ hB₂ _ _
+    obtain ⟨U₁, V₁, hUV₁₁, hUV₁₂, _⟩ := hB₁
+    obtain ⟨U₂, V₂, hUV₂₁, hUV₂₂, _⟩ := hB₂
     exists Set.prod (U₁ ∩ U₂) (V₁ ∩ V₂)
     constructor
     exists U₁ ∩ U₂, V₁ ∩ V₂
