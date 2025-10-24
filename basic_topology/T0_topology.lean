@@ -490,10 +490,25 @@ theorem neighborhood_upward_closed {𝒯: Set (Set X)} (x: X) {A B: Set X} (h1: 
   · exact hU2
   · exact le_trans hU3 h2
 
-theorem neighborhood_binary_inter {𝒯: Set (Set X)} (x: X)
-  (N₁ N₂: Set X) (h₁: neighborhood 𝒯 N₁ x) (h₂: neighborhood 𝒯 N₂ x):
-  neighborhood 𝒯 (N₁ ∩ N₂) x :=
-  sorry
+-- N2: every finite intersection of neighborhoods is a neighborhood
+theorem neighborhood_binary_inter {𝒯: Set (Set X)}(x: X) (A: Set X)(h𝒯: IsTopology 𝒯) (B: Set X) (hA: A∈ Nbhds 𝒯 x)(hB: B∈Nbhds 𝒯 x): A∩B ∈ Nbhds 𝒯 x := by
+  simp_all [Nbhds,neighborhood]
+  obtain ⟨ U,⟨hU1,hU2,hU3⟩⟩  := hA
+  obtain ⟨ V,⟨hV1,hV2,hV3⟩⟩ := hB
+  use U∩V
+  repeat constructor
+  exact binary_inter_open h𝒯 hU1 hV1
+  constructor
+  exact Set.mem_inter hU2 hV2
+  constructor
+  have: U∩V⊆ U:= by exact Set.inter_subset_left
+  exact fun ⦃a⦄ a_1 ↦ hU3 (this a_1)
+  have : U∩V⊆ V:= by exact Set.inter_subset_right
+  exact fun ⦃a⦄ a_1 ↦ hV3 (this a_1)
+
+
+theorem neighborhood_finite_inter {𝒯: Set (Set X)} (x: X) (𝒩: Set (Set X))(h1: 𝒩 ⊆ Nbhds 𝒯 x) (h2: Finite 𝒩): ⋂₀ 𝒩 ∈ Nbhds 𝒯 x := by
+sorry
 
 -- N2: every finite intersection of neighborhoods is a neighborhood
 theorem neighborhood_finite_inter {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (x: X) (𝒩: Set (Set X)) (h1: 𝒩 ⊆ Nbhds 𝒯 x) (h2: Finite 𝒩): ⋂₀ 𝒩 ∈ Nbhds 𝒯 x := by
@@ -507,6 +522,7 @@ theorem neighborhood_finite_inter {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (
   · exact h2
 
 -- N3: x belongs to all its neighborhoods
+
 theorem neighborhood_mem {𝒯: Set (Set X)} {x: X} {N: Set X} (h: neighborhood 𝒯 N x): x ∈ N := by
   obtain ⟨_, _, hU2, hU3⟩ := h
   exact hU3 hU2
@@ -635,7 +651,39 @@ theorem open_iff_eq_interior {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Se
   · intro h
     rw [h]
     apply interior_open h𝒯
-
+theorem interior_iff_basis_element {ℬ 𝒯: Set (Set X)} (Bbase: base 𝒯 ℬ )(A: Set X)(x: X): x∈ interior 𝒯 A ↔ ∃ B∈ ℬ, x∈ B ∧ B⊆ A := by
+  rw[base] at Bbase
+  constructor
+  rw[interior]
+  intro h_int
+  simp at h_int
+  rw[interior_point,neighborhood] at h_int
+  obtain ⟨ U,⟨hU1,hU2,hU3⟩⟩  := h_int
+  apply Bbase.2 at hU1
+  obtain ⟨ 𝒞, ⟨ hc1,hc2⟩⟩  := hU1
+  rw[hc2] at hU2
+  have : ∃ B∈ 𝒞 , x∈ B := by exact hU2
+  obtain ⟨ B,⟨ hB1,hB2⟩ ⟩ := this
+  use B
+  constructor
+  apply hc1 at hB1
+  exact hB1
+  subst hc2
+  simp_all only [Set.mem_sUnion, Set.sUnion_subset_iff, and_self]
+  intro hB
+  simp [interior,interior_point,neighborhood]
+  obtain ⟨left, right⟩ := Bbase
+  obtain ⟨w, h⟩ := hB
+  obtain ⟨left_1, right_1⟩ := h
+  obtain ⟨left_2, right_1⟩ := right_1
+  apply Exists.intro
+  · apply And.intro
+    apply left
+    on_goal 2 => apply And.intro
+    on_goal 2 => { exact left_2
+    }
+    simp_all only
+    · simp_all only
 
 -- interior (A ∩ B) = interior A ∩ interior B
 theorem interior_inter_eq {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A B: Set X): interior 𝒯 (A ∩ B) = interior 𝒯 A ∩ interior 𝒯 B := by
@@ -1090,3 +1138,42 @@ theorem product_topology_right_projection_open {TX: Set (Set X)} {TY: Set (Set Y
   {U: Set (X × Y)} (hU: U ∈ product_topology TX TY):
   (fun x => x.2) '' U ∈ TY :=
   sorry
+
+theorem boxes_base_product_topology {TX: Set (Set X)} {TY: Set (Set Y)} : base (product_topology TX TY) (product_topology_basis TX TY) := by
+  rw[base_iff_unions]
+  constructor
+  rw[product_topology]
+  exact unions_sub (product_topology_basis TX TY)
+  exact rfl
+theorem box_equal_prod_projections {A: Set X}{B: Set Y} : A.prod B = (Set.image Prod.fst (A.prod B)).prod (Set.image Prod.snd (A.prod B)):= by
+  refine Set.Subset.antisymm_iff.mpr ?_
+  constructor
+  intro (x,y) hxy
+  have hx : x∈(Set.image Prod.fst (A.prod B)):= by
+    refine (Set.mem_image Prod.fst (A.prod B) x).mpr ?_
+    use (x,y)
+  have hy: y∈ (Set.image Prod.snd (A.prod B)):= by
+    refine (Set.mem_image Prod.snd (A.prod B) y).mpr ?_
+    use (x,y)
+  exact ⟨hx, hy⟩
+  intro (x,y) hxy
+  rcases hxy with ⟨hx, hy⟩
+  rcases hx with ⟨p, hp_mem, hpx⟩
+  rcases hy with ⟨q, hq_mem, hqy⟩
+  simp at hpx
+  simp at hqy
+  have hA : x ∈ A := by
+    rw [← hpx]
+    exact hp_mem.1
+  have hB : y∈ B:= by
+    rw[← hqy]
+    exact hq_mem.2
+  exact ⟨ hA,hB⟩
+
+theorem boxes_subset_everywhere {TX: Set (Set X)} {TY: Set (Set Y)} (U: Set (X×Y))(hTX: IsTopology TX)(hTY: IsTopology TY)(hU : U ∈ product_topology TX TY): ∀x∈ U , ∃ A∈ product_topology_basis TX TY , x∈A ∧ A⊆ U := by
+  intro x hx
+  rw[open_iff_eq_interior] at hU
+  rw[hU] at hx
+  rw [interior_iff_basis_element boxes_base_product_topology] at hx
+  exact hx
+  exact product_topology_is_topology hTX hTY

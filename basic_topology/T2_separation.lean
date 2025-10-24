@@ -10,6 +10,7 @@ import basic_topology.T1_metric
 set_option linter.style.commandStart false
 set_option linter.style.longLine false
 set_option linter.dupNamespace false
+set_option linter.style.multiGoal false
 
 variable {X Y D: Type*}
 
@@ -141,7 +142,94 @@ theorem frechet_iff' (T: Set (Set X)): fréchet T ↔ ∀ x, {x} = Set.sInter (N
 -- equivalence of metrics
 
 theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausdorff T ↔ closedset (product_topology T T) (Set.diagonal X) := by
-  sorry
+  constructor
+  intro h
+  rw [closedset, open_iff_neighborhood_of_all_points]
+  intro (x1, x2) hx
+  obtain ⟨N1, N2, hN1, hN2, hN⟩ := h x1 x2 hx
+  obtain ⟨U1, hU1⟩ := hN1
+  obtain ⟨U2, hU2⟩ := hN2
+  exists {(x1, x2): X × X | x1 ∈ U1 ∧ x2 ∈ U2}
+  repeat' (apply And.intro)
+  simp
+  simp[product_topology,unions,product_topology_basis]
+  use { Set.prod U1 U2 }
+  simp [Set.sUnion_singleton]
+  constructor
+  use U1
+  constructor
+  exact hU1.1
+  use U2
+  constructor
+  exact hU2.1
+  exact rfl
+  exact rfl
+  exact hU1.2.1
+  exact hU2.2.1
+  intro (y1,y2) hy
+  simp
+  push_neg
+  by_contra h2
+  simp at hy
+  have hny: ¬ (Disjoint N1 N2):= by
+    refine Set.not_disjoint_iff.mpr ?_
+    use y1
+    constructor
+    apply hU1.2.2
+    exact hy.1
+    apply hU2.2.2
+    rw[h2]
+    exact hy.2
+  simp_all
+  exact product_topology_is_topology hT hT
+  rw[closedset,hausdorff,Set.diagonal]
+  intro hc x y hxy
+  let xy:= (x,y)
+  have h1: xy∈ {p | p.1 = p.2}ᶜ:= by exact hxy
+  rw[open_iff_neighborhood_of_all_points] at hc
+  apply hc at h1
+  simp[neighborhood,product_topology] at h1
+  obtain ⟨U,⟨ hU1,hU2,hU3⟩⟩  := h1
+  have : ∃ A∈ product_topology_basis T T, A⊆ U∧ xy ∈ A:= by
+    apply boxes_subset_everywhere at hU1
+    apply hU1 at hU2
+    obtain ⟨ A,hA⟩ := hU2
+    use A
+    constructor
+    exact hA.1
+    constructor
+    exact hA.2.2
+    exact hA.2.1
+    exact hT
+    exact hT
+  obtain ⟨ A,⟨ha1,ha2,ha3⟩ ⟩ := this
+  rw[product_topology_basis] at ha1
+  simp at ha1
+  obtain ⟨ A1,⟨ hpa1,hpa2 ⟩ ⟩ := ha1
+  obtain ⟨ A2,⟨hpa3,hpa4⟩⟩ := hpa2
+  have hP: A1.prod A2 = (Set.image Prod.fst A).prod (Set.image Prod.snd A) := by
+    rw[hpa4]
+    exact box_equal_prod_projections
+  use A1, A2
+  rw[hpa4] at ha3
+  constructor
+  apply open_neighborhood
+  exact ha3.1
+  exact hpa1
+  constructor
+  apply open_neighborhood
+  exact ha3.2
+  exact hpa3
+  by_contra h
+  have : ∃ x, x∈ A1 ∧ x∈ A2:= by exact Set.not_disjoint_iff.mp h
+  obtain ⟨ a,ha⟩ := this
+  let aa:= (a,a)
+  have : aa∈ A1.prod A2 := by exact ha
+  rw[← hpa4] at this
+  apply ha2 at this
+  apply hU3 at this
+  tauto
+  exact product_topology_is_topology hT hT
 
 theorem continuous_extension_dense_domain_unique {TX: Set (Set X)} {TY: Set (Set Y)} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
   sorry
