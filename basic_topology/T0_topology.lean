@@ -491,7 +491,7 @@ theorem neighborhood_upward_closed {𝒯: Set (Set X)} (x: X) {A B: Set X} (h1: 
   · exact le_trans hU3 h2
 
 -- N2: every finite intersection of neighborhoods is a neighborhood
-theorem neighborhood_binary_inter {𝒯: Set (Set X)}(x: X) (A: Set X)(h𝒯: IsTopology 𝒯) (B: Set X) (hA: A∈ Nbhds 𝒯 x)(hB: B∈Nbhds 𝒯 x): A∩B ∈ Nbhds 𝒯 x := by
+theorem neighborhood_binary_inter {𝒯: Set (Set X)} {x: X} {A: Set X} (h𝒯: IsTopology 𝒯) {B: Set X} (hA: neighborhood 𝒯 A x)(hB: neighborhood 𝒯 B x): neighborhood 𝒯 (A ∩ B) x := by
   simp_all [Nbhds,neighborhood]
   obtain ⟨ U,⟨hU1,hU2,hU3⟩⟩  := hA
   obtain ⟨ V,⟨hV1,hV2,hV3⟩⟩ := hB
@@ -506,10 +506,6 @@ theorem neighborhood_binary_inter {𝒯: Set (Set X)}(x: X) (A: Set X)(h𝒯: Is
   have : U∩V⊆ V:= by exact Set.inter_subset_right
   exact fun ⦃a⦄ a_1 ↦ hV3 (this a_1)
 
-
-theorem neighborhood_finite_inter {𝒯: Set (Set X)} (x: X) (𝒩: Set (Set X))(h1: 𝒩 ⊆ Nbhds 𝒯 x) (h2: Finite 𝒩): ⋂₀ 𝒩 ∈ Nbhds 𝒯 x := by
-sorry
-
 -- N2: every finite intersection of neighborhoods is a neighborhood
 theorem neighborhood_finite_inter {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (x: X) (𝒩: Set (Set X)) (h1: 𝒩 ⊆ Nbhds 𝒯 x) (h2: Finite 𝒩): ⋂₀ 𝒩 ∈ Nbhds 𝒯 x := by
   apply finite_inter_iff.mpr
@@ -517,7 +513,7 @@ theorem neighborhood_finite_inter {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (
     constructor
     · apply neighborhood_univ h𝒯
     · intro _ hA _ hB
-      exact neighborhood_binary_inter _ _ _ hA hB
+      exact neighborhood_binary_inter h𝒯 hA hB
   · exact h1
   · exact h2
 
@@ -1057,13 +1053,10 @@ def subspace (T: Set (Set X)) (A: Set X): Set (Set A) :=
   subspace_down A '' T
 
 -- basic helpers
-theorem subspace_open_exists {T: Set (Set X)}
-  {A: Set X} {V: Set A} (hV: V ∈ subspace T A):
-  ∃ U ∈ T, subspace_down A U = V := by
+theorem subspace_open_exists {T: Set (Set X)} {A: Set X} {V: Set A} (hV: V ∈ subspace T A): ∃ U ∈ T, subspace_down A U = V := by
   simp_all [subspace_down, subspace]
 
-theorem subspace_open_if {T: Set (Set X)} {A U: Set X} (hU: U ∈ T):
-  subspace_down A U ∈ subspace T A := by
+theorem subspace_open_if {T: Set (Set X)} {A U: Set X} (hU: U ∈ T): subspace_down A U ∈ subspace T A := by
   simp [subspace, subspace_down]
   exists U
 
@@ -1085,9 +1078,7 @@ def product_topology_basis (TX: Set (Set X)) (TY: Set (Set Y)): Set (Set (X × Y
 def product_topology (TX: Set (Set X)) (TY: Set (Set Y)): Set (Set (X × Y)) :=
   unions (product_topology_basis TX TY)
 
-theorem product_topology_is_topology {TX: Set (Set X)} {TY: Set (Set Y)}
-  (hTX: IsTopology TX) (hTY: IsTopology TY):
-  IsTopology (product_topology TX TY) := by
+theorem product_topology_is_topology {TX: Set (Set X)} {TY: Set (Set Y)} (hTX: IsTopology TX) (hTY: IsTopology TY): IsTopology (product_topology TX TY) := by
   apply is_base_iff_unions_topology.mp
   apply is_base_iff_base_conditions.mpr
   constructor

@@ -144,7 +144,7 @@ theorem frechet_iff' (T: Set (Set X)): fréchet T ↔ ∀ x, {x} = Set.sInter (N
 theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausdorff T ↔ closedset (product_topology T T) (Set.diagonal X) := by
   constructor
   intro h
-  rw [closedset, open_iff_neighborhood_of_all_points]
+  rw [closedset, openset, open_iff_neighborhood_of_all_points]
   intro (x1, x2) hx
   obtain ⟨N1, N2, hN1, hN2, hN⟩ := h x1 x2 hx
   obtain ⟨U1, hU1⟩ := hN1
@@ -186,7 +186,7 @@ theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausd
   intro hc x y hxy
   let xy:= (x,y)
   have h1: xy∈ {p | p.1 = p.2}ᶜ:= by exact hxy
-  rw[open_iff_neighborhood_of_all_points] at hc
+  rw[openset, open_iff_neighborhood_of_all_points] at hc
   apply hc at h1
   simp[neighborhood,product_topology] at h1
   obtain ⟨U,⟨ hU1,hU2,hU3⟩⟩  := h1
