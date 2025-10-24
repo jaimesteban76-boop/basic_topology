@@ -1048,7 +1048,7 @@ theorem subspace_open (T: Set (Set X)) (A: Set X) {U: Set X} (hU: U ∈ T):
 -- TODO: show if U is open in T then U ∩ A is open in A
 
 theorem subspace_topology_is_topology {T: Set (Set X)} (hT: IsTopology T) (A: Set X):
-  IsTopology (subspace T A) :=
+  IsTopology (subspace T A) := by
   sorry
 
 -- Binary product topology
