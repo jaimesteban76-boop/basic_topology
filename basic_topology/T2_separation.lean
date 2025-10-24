@@ -16,8 +16,15 @@ set_option linter.style.multiGoal false
 variable {X Y D: Type*}
 
 
+def separable_by_opensets (T: Set (Set X)): Endorelation (Set X) :=
+  fun A B => ∃ U V, U ∈ T ∧ V ∈ T ∧ Disjoint U V ∧ A ⊆ U ∧ B ⊆ V
 
+def separable_by_continuous (T: Set (Set X)): Endorelation (Set X) :=
+  fun A B => ∃ f: X → I₀₁, continuous T UnitIntervalMetricSpace.opensets f ∧ ∀ a ∈ A , f a = 0 ∧ ∀ b ∈ B, f b = 1
 
+theorem separable_by_cont_separable_by_open {T: Set (Set X)} {A B: Set X} (h: separable_by_continuous T A B): separable_by_opensets T A B := by
+  -- idea: take U = f⁻¹([0, 1/2)), V = f⁻¹((1/2, 1])
+  sorry
 
 -- fréchet and hausdorff spaces
 def fréchet (𝒯: Set (Set X)): Prop :=
@@ -27,7 +34,25 @@ def fréchet (𝒯: Set (Set X)): Prop :=
 def hausdorff (𝒯: Set (Set X)): Prop :=
   ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ Disjoint U V
 
-theorem fréchet_implies_hausdorff (𝒯: Set (Set X)): hausdorff 𝒯 → fréchet 𝒯 := by
+def regular (T: Set (Set X)): Prop :=
+  ∀ x A, x ∉ A → closedset T A → separable_by_opensets T A {x}
+
+def regular_hausdorff (T: Set (Set X)): Prop :=
+  hausdorff T ∧ regular T
+
+def completely_regular (T: Set (Set X)): Prop :=
+  ∀ A x, x ∉ A → closedset T A → separable_by_continuous T A {x}
+
+def tychonoff (T: Set (Set X)): Prop :=
+  hausdorff T ∧ completely_regular T
+
+def normal (T: Set ( Set X)): Prop :=
+  ∀A B , closedset T A → closedset T B → Disjoint A B → separable_by_opensets T A B
+
+def normal_hausdorff (T:Set (Set X)): Prop :=
+  hausdorff T ∧ normal T
+
+theorem hausdorff_implies_fréchet (𝒯: Set (Set X)): hausdorff 𝒯 → fréchet 𝒯 := by
   intro h x y h1
   obtain ⟨U, V, hU1, hV1, h2⟩ := h x y h1
   exists U, V
@@ -234,16 +259,3 @@ theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausd
 
 theorem continuous_extension_dense_domain_unique {TX: Set (Set X)} {TY: Set (Set Y)} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
   sorry
-
-def regular (T: Set (Set X)): Prop :=
-  ∀ x, ∀ A: Set X, x ∉ A → closedset T A → ∃ U V, U ∈ T ∧ V ∈ T ∧ x ∈ U ∧ A ⊆ V ∧ U ∩ V = ∅
-
-def regular_hausdorff (T: Set (Set X)): Prop :=
-  hausdorff T ∧ regular T
-
-def completely_regular (T: Set (Set X)): Prop :=
-  ∀ x₀, ∀ A, x₀ ∉ A → closedset T A → ∃ f: X → I₀₁,
-  continuous T UnitIntervalMetricSpace.opensets f ∧ f x₀ = 0 ∧ ∀ a ∈ A, f a = 1
-
-def tychonoff (T: Set (Set X)): Prop :=
-  hausdorff T ∧ completely_regular T
