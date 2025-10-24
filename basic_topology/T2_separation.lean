@@ -200,6 +200,8 @@ theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausd
     constructor
     exact hA.2.2
     exact hA.2.1
+    exact hT
+    exact hT
   obtain ⟨ A,⟨ha1,ha2,ha3⟩ ⟩ := this
   rw[product_topology_basis] at ha1
   simp at ha1
@@ -228,5 +230,6 @@ theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausd
   apply hU3 at this
   tauto
   exact product_topology_is_topology hT hT
+
 theorem continuous_extension_dense_domain_unique {TX: Set (Set X)} {TY: Set (Set Y)} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
   sorry
