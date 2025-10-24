@@ -22,7 +22,16 @@ theorem compactset_iff_compact_subspace (T: Set (Set X)) (A: Set X):
   compactset T A ↔ compact (subspace A T) := by
   constructor
   intro h C h1 h2
-
-  have := h
+  obtain ⟨C₀, h3, h4, h5⟩ := h (supspace C) sorry sorry
+  exists subspace A C₀
+  repeat' (apply And.intro)
+  sorry
+  sorry
+  sorry
+  intro h C h1 h2
+  obtain ⟨C₀, h3, h4, h5⟩ := h (subspace_down A '' C) sorry sorry
+  exists supspace C₀
+  repeat' (apply And.intro)
+  sorry
   sorry
   sorry

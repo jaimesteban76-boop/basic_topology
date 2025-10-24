@@ -1,5 +1,6 @@
 
 import Mathlib.Data.Set.Finite.Basic
+import Mathlib.Data.Real.Basic
 import Mathlib.Data.ENNReal.Basic
 import Mathlib.Data.ENNReal.Inv
 
@@ -105,7 +106,27 @@ theorem neq_dist_pos [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x y:
 
 
 
+-- the standard Real metric space
+def Real.metric (x y: Real): NNReal :=
+  ⟨abs (x - y), abs_nonneg (x - y)⟩
 
+def RealMetric: IsMetric Real.metric := {
+  dist_self_bot := by
+    intro x
+    simp [Real.metric]
+  dist_bot_eq := by
+    intro x y h
+    simp_all [Real.metric]
+    sorry
+  symmetric := by
+    intro x y
+    simp_all [Real.metric]
+    sorry
+  triangle := by
+    intros
+    simp_all [Real.metric]
+    sorry
+}
 
 -- the discrete metric on an arbitrary type
 def discrete_metric (X D: Type*) [DecidableEq X] [CompleteDistanceSpace D]: X → X → D :=
@@ -566,3 +587,26 @@ noncomputable def set_dist [CompleteDistanceSpace D] (d: X → X → D) (A B: Se
 --   triangle := by
 --     sorry
 -- }
+
+-- subspace metric
+def metric_subspace (d: X → X → D) (A: Set X): A → A → D :=
+  fun a b => d (Subtype.val a) (Subtype.val b)
+
+-- if d is a metric then so is submetric...
+theorem submetric_metric [DistanceSpaceStruct D] {d: X → X → D} (h: IsMetric d) (A: Set X):
+  IsMetric (metric_subspace d A) := {
+  dist_self_bot := sorry
+  dist_bot_eq := sorry
+  symmetric := sorry
+  triangle := sorry
+}
+
+-- unit interval as a metric space
+def UnitInterval: Set Real :=
+  Set.Icc (0: Real) (1: Real)
+
+def UnitIntervalMetricSpace: MetricSpace NNReal := {
+  points := UnitInterval
+  distance := metric_subspace Real.metric _
+  is_metric := submetric_metric RealMetric _
+}
