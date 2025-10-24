@@ -461,10 +461,11 @@ def metric_to_topology [DistanceSpace D] (d: Metric X D): Topology X := {
   is_topology := metric_opensets_is_topology d.is_metric
 }
 
+def MetricSpace.opensets [DistanceSpace D] (M: MetricSpace D): Set (Set M.points) :=
+  metric_opensets M.distance
+
 def metrizable (𝒯: Topology X) (D: Type*) [DistanceSpace D]: Prop :=
   ∃ d: Metric X D, metric_to_topology d = 𝒯
-
-
 
 -- diameter of a set
 noncomputable def diameter [CompleteDistanceSpace D] (d: X → X → D) (A: Set X): D :=
@@ -538,11 +539,11 @@ theorem isometry_continuous_metric [DistanceSpace D] {dX: X → X → D} {dY: Y 
 example (f: X → Y): X → Set.range f :=
   Set.rangeFactorization f
 
-def subspace_metric (d: X → X → D) (A: Set X): A → A → D :=
+def submetric (d: X → X → D) (A: Set X): A → A → D :=
   fun a1 a2 => d a1 a2
 
 
-theorem isometry_homeomorphic_image [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} {hX: IsMetric dX} {hY: IsMetric dY} {i: X → Y} (h: isometry dX dY i): homeomorphism (metric_opensets dX) (metric_opensets (subspace_metric dY (Set.range i))) (Set.rangeFactorization i) := {
+theorem isometry_homeomorphic_image [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} {hX: IsMetric dX} {hY: IsMetric dY} {i: X → Y} (h: isometry dX dY i): homeomorphism (metric_opensets dX) (metric_opensets (submetric dY (Set.range i))) (Set.rangeFactorization i) := {
   bijection := by
     constructor
     · have := isometry_is_injective hX hY i h
@@ -588,13 +589,9 @@ noncomputable def set_dist [CompleteDistanceSpace D] (d: X → X → D) (A B: Se
 --     sorry
 -- }
 
--- subspace metric
-def metric_subspace (d: X → X → D) (A: Set X): A → A → D :=
-  fun a b => d (Subtype.val a) (Subtype.val b)
-
 -- if d is a metric then so is submetric...
-theorem submetric_metric [DistanceSpaceStruct D] {d: X → X → D} (h: IsMetric d) (A: Set X):
-  IsMetric (metric_subspace d A) := {
+theorem submetric_is_metric [DistanceSpaceStruct D] {d: X → X → D} (h: IsMetric d) (A: Set X):
+  IsMetric (submetric d A) := {
   dist_self_bot := sorry
   dist_bot_eq := sorry
   symmetric := sorry
@@ -602,11 +599,17 @@ theorem submetric_metric [DistanceSpaceStruct D] {d: X → X → D} (h: IsMetric
 }
 
 -- unit interval as a metric space
-def UnitInterval: Set Real :=
+def I₀₁: Type :=
   Set.Icc (0: Real) (1: Real)
 
+instance: Zero I₀₁ :=
+  ⟨⟨0, by simp⟩⟩
+
+instance: One I₀₁ :=
+  ⟨⟨1, by simp⟩⟩
+
 def UnitIntervalMetricSpace: MetricSpace NNReal := {
-  points := UnitInterval
-  distance := metric_subspace Real.metric _
-  is_metric := submetric_metric RealMetric _
+  points := I₀₁
+  distance := submetric Real.metric _
+  is_metric := submetric_is_metric RealMetric _
 }

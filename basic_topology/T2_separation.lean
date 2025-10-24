@@ -1,3 +1,4 @@
+import basic_topology.T5_nets
 
 import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Data.ENNReal.Basic
@@ -237,7 +238,12 @@ theorem continuous_extension_dense_domain_unique {TX: Set (Set X)} {TY: Set (Set
 def regular (T: Set (Set X)): Prop :=
   ∀ x, ∀ A: Set X, x ∉ A → closedset T A → ∃ U V, U ∈ T ∧ V ∈ T ∧ x ∈ U ∧ A ⊆ V ∧ U ∩ V = ∅
 
-def T3 (T: Set (Set X)): Prop :=
+def regular_hausdorff (T: Set (Set X)): Prop :=
   hausdorff T ∧ regular T
 
--- def completely_regular (T: Set (Set X)) := sorry
+def completely_regular (T: Set (Set X)): Prop :=
+  ∀ x₀, ∀ A, x₀ ∉ A → closedset T A → ∃ f: X → I₀₁,
+  continuous T UnitIntervalMetricSpace.opensets f ∧ f x₀ = 0 ∧ ∀ a ∈ A, f a = 1
+
+def tychonoff (T: Set (Set X)): Prop :=
+  hausdorff T ∧ completely_regular T
