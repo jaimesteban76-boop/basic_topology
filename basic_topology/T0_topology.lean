@@ -36,13 +36,6 @@ theorem empty_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): ∅ ∈ 𝒯 :=
   apply h𝒯.sUnion
   exact Set.empty_subset 𝒯
 
-theorem univ_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): Set.univ ∈ 𝒯 := by
-  have: (@Set.univ X) = ⋂₀ ∅ := by ext; simp
-  rw [this]
-  apply h𝒯.finite_sInter
-  · exact Set.empty_subset 𝒯
-  · exact Finite.of_subsingleton
-
 -- Binary unions and intersections of open sets are open
 theorem binary_union_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∪ B ∈ 𝒯 := by
   have: A ∪ B = ⋃₀ {A, B} := by ext; simp
@@ -50,20 +43,13 @@ theorem binary_union_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set
   apply h𝒯.sUnion
   exact Set.pair_subset hA hB
 
-theorem binary_inter_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∩ B ∈ 𝒯 := by
-  have: A ∩ B = ⋂₀ {A, B} := by ext; simp
-  rw [this]
-  apply h𝒯.finite_sInter
-  · exact Set.pair_subset hA hB
-  · exact Finite.Set.finite_insert A {B}
-
 -- The union of a sequence of open sets is open
 theorem seq_union_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, A n ∈ 𝒯): Set.iUnion A ∈ 𝒯 := by
   apply h𝒯.sUnion
   exact Set.range_subset_iff.mpr h
 
 -- theorem: finite intersection property is equivalent to binary intersections plus whole set
- theorem finite_inter_iff (T: Set (Set X)): (∀ U ⊆ T, U.Finite → ⋂₀ U ∈ T) ↔ Set.univ ∈ T ∧ ∀ A ∈ T, ∀ B ∈ T, A ∩ B ∈ T := by
+ theorem finite_inter_iff {T: Set (Set X)}: (∀ U ⊆ T, U.Finite → ⋂₀ U ∈ T) ↔ Set.univ ∈ T ∧ ∀ A ∈ T, ∀ B ∈ T, A ∩ B ∈ T := by
   constructor
   · intro h
     constructor
@@ -85,11 +71,19 @@ theorem seq_union_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A: ℕ → 
     · exact hU1 hS
     · exact ih
 
+theorem univ_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): Set.univ ∈ 𝒯 := by
+  exact (finite_inter_iff.mp h𝒯.finite_sInter).left
+
+theorem binary_inter_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∩ B ∈ 𝒯 := by
+  exact (finite_inter_iff.mp h𝒯.finite_sInter).right _ hA _ hB
+
+
+
 def openset (𝒯: Set (Set X)) (A: Set X): Prop :=
   A ∈ 𝒯
 
 def closedset (𝒯: Set (Set X)) (A: Set X): Prop :=
-  Aᶜ ∈ 𝒯
+  openset 𝒯 Aᶜ
 
 def clopenset (𝒯: Set (Set X)) (A: Set X): Prop :=
   openset 𝒯 A ∧ closedset 𝒯 A
@@ -111,14 +105,16 @@ theorem closedset_finite_sUnion {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): �
   sorry
 
 theorem binary_union_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: closedset 𝒯 A) (hB: closedset 𝒯 B): closedset 𝒯 (A ∪ B) := by
-  sorry
+  rw [closedset, Set.compl_union]
+  exact binary_inter_open h𝒯 hA hB
 
 theorem binary_inter_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: closedset 𝒯 A) (hB: closedset 𝒯 B): closedset 𝒯 (A ∩ B) := by
-  sorry
+  rw [closedset, Set.compl_inter]
+  exact binary_union_open h𝒯 hA hB
 
 -- The union of a sequence of open sets is open
 theorem seq_inter_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, closedset 𝒯 (A n)): closedset 𝒯 (Set.iInter A) := by
-  sorry
+  exact closedset_sInter h𝒯 _ (Set.range_subset_iff.mpr h)
 
 -- the set of all subsets is a topology, aka the discrete topology
 theorem discrete_is_topology (X: Type*): IsTopology (@Set.univ (Set X)) := {
@@ -141,6 +137,7 @@ theorem indiscrete_is_topology (X: Type*): IsTopology {∅, @Set.univ X} := {
       | Or.inl h' => rw [h'] at hU; contradiction
       | Or.inr h' => exact h'
 }
+
 
 
 -- the Sierpiński topology define on Bool with {true} open
@@ -513,28 +510,46 @@ theorem neighborhood_binary_inter {𝒯: Set (Set X)}(x: X) (A: Set X)(h𝒯: Is
 theorem neighborhood_finite_inter {𝒯: Set (Set X)} (x: X) (𝒩: Set (Set X))(h1: 𝒩 ⊆ Nbhds 𝒯 x) (h2: Finite 𝒩): ⋂₀ 𝒩 ∈ Nbhds 𝒯 x := by
 sorry
 
+-- N2: every finite intersection of neighborhoods is a neighborhood
+theorem neighborhood_finite_inter {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (x: X) (𝒩: Set (Set X)) (h1: 𝒩 ⊆ Nbhds 𝒯 x) (h2: Finite 𝒩): ⋂₀ 𝒩 ∈ Nbhds 𝒯 x := by
+  apply finite_inter_iff.mpr
+  · simp [Nbhds]
+    constructor
+    · apply neighborhood_univ h𝒯
+    · intro _ hA _ hB
+      exact neighborhood_binary_inter _ _ _ hA hB
+  · exact h1
+  · exact h2
+
 -- N3: x belongs to all its neighborhoods
 
 theorem neighborhood_mem {𝒯: Set (Set X)} {x: X} {N: Set X} (h: neighborhood 𝒯 N x): x ∈ N := by
   obtain ⟨_, _, hU2, hU3⟩ := h
   exact hU3 hU2
 
--- N4: if V is a neighborhood of x, there exists a neighborhood W of x such that for all y in W, V is a neighborhood of y.
-theorem neighborhood_N4 {𝒯: Set (Set X)} {x: X} {V: Set X} (h: neighborhood 𝒯 V x): ∃ W ∈ Nbhds 𝒯 x, ∀ y ∈ W, V ∈ Nbhds 𝒯 y := sorry
+-- N4: if V is a neighborhood of x, there exists a neighborhood W of x
+-- such that for all y in W, V is a neighborhood of y.
+theorem neighborhood_linking {𝒯: Set (Set X)} {x: X} {V: Set X} (h: neighborhood 𝒯 V x): ∃ W ∈ Nbhds 𝒯 x, ∀ y ∈ W, V ∈ Nbhds 𝒯 y := by
+  obtain ⟨U, hU₁, hU₂, hU₃⟩ := h
+  exists U
+  constructor
+  · apply open_neighborhood _ hU₂ hU₁
+  · intro y hy
+    exists U
 
 -- preceding 4 properties packaged as follows:
 structure neighborhood_axioms (𝒩: X → Set (Set X)): Prop where
   upward_closed: ∀ x, ∀ A B: Set X, A ∈ 𝒩 x → A ⊆ B → B ∈ 𝒩 x
   finite_inter: ∀ x, ∀ 𝒰 ⊆ 𝒩 x, Finite 𝒰 → ⋂₀ 𝒰 ∈ 𝒩 x
   point_mem: ∀ x, ∀ N ∈ 𝒩 x, x ∈ N
-  N4: ∀ x, ∀ V ∈ 𝒩 x, ∃ W ∈ 𝒩 x, ∀ y ∈ W, V ∈ 𝒩 y -- rename
+  linking: ∀ x, ∀ V ∈ 𝒩 x, ∃ W ∈ 𝒩 x, ∀ y ∈ W, V ∈ 𝒩 y -- rename
 
 -- Nhbds satisties these as we just showed
-theorem nbhds_obeys_neighborhood_axioms {𝒯: Set (Set X)}: neighborhood_axioms (Nbhds 𝒯) := {
+theorem nbhds_obeys_neighborhood_axioms {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): neighborhood_axioms (Nbhds 𝒯) := {
   upward_closed := neighborhood_upward_closed
-  finite_inter := neighborhood_finite_inter
+  finite_inter := neighborhood_finite_inter h𝒯
   point_mem := fun _ _ => neighborhood_mem
-  N4 := fun _ _ => neighborhood_N4
+  linking := fun _ _ => neighborhood_linking
 }
 
 def neighborhood_topology (𝒩: X → Set (Set X)): Set (Set X) :=
@@ -608,11 +623,11 @@ theorem interior_open {𝒯: Set (Set X)} (h: IsTopology 𝒯) (A: Set X): inter
 
 -- The interior of A is largest open subset of A
 theorem interior_largest_open_subset {𝒯: Set (Set X)} {A U: Set X} (h1: U ∈ 𝒯) (h2: U ⊆ A): U ⊆ interior 𝒯 A := by
-  rw[interior]
+  rw [interior]
   intro y hy
-  refine Set.mem_setOf.mpr ?_
-  rw[interior_point]
-  rw[neighborhood]
+  apply Set.mem_setOf.mpr
+  rw [interior_point]
+  rw [neighborhood]
   use U
 
 -- The interior of A is the union of all open subsets of A.
@@ -1024,26 +1039,38 @@ theorem connected_topological_property: topological_property connected_space := 
   intro X Y h hX U V hU1 hV1 hU2 hV2 hUV
   sorry
 
-def subset_embed (A: Set X) (U: Set A): Set X :=
+-- Given A ⊆ X and U ⊆ A returns U ⊆ X.
+def subspace_up {A: Set X} (U: Set A): Set X :=
   Subtype.val '' U
 
-def subfamily_embed (A: Set X) (T: Set (Set A)):
-  Set (Set X) :=
-  sorry
+-- Given A ⊆ X and U ⊆ X returns U ∩ A ⊆ A.
+def subspace_down (A: Set X) (U: Set X): Set A :=
+  Subtype.val ⁻¹' (U ∩ A)
 
+-- -- Given A ⊆ X and T ⊆ 𝒫(A) retursn T ⊆ 𝒫(X).
+def supspace {A: Set X} (T: Set (Set A)): Set (Set X) :=
+  subspace_down A ⁻¹' T
 
--- subspace topology
+-- Given A ⊆ X and T ⊆ 𝒫(X) retursn T ⊆ 𝒫(A).
+-- i.e. the subspace topology
 def subspace (T: Set (Set X)) (A: Set X): Set (Set A) :=
-  (fun U => Subtype.val ⁻¹' (U ∩ A)) '' T
+  subspace_down A '' T
 
 -- basic helpers
-theorem subspace_open_iff (T: Set (Set X)) (A: Set X) (V: Set A):
-  V ∈ subspace T A ↔ ∃ U ∈ T, Subtype.val ⁻¹' (U ∩ A) = V := by
-  simp [subspace]
+theorem subspace_open_exists {T: Set (Set X)}
+  {A: Set X} {V: Set A} (hV: V ∈ subspace T A):
+  ∃ U ∈ T, subspace_down A U = V := by
+  simp_all [subspace_down, subspace]
 
-theorem subspace_open (T: Set (Set X)) (A: Set X) {U: Set X} (hU: U ∈ T):
-  Subtype.val ⁻¹' (U ∩ A) ∈ subspace T A := by
+theorem subspace_open_if {T: Set (Set X)} {A U: Set X} (hU: U ∈ T):
+  subspace_down A U ∈ subspace T A := by
+  simp [subspace, subspace_down]
   exists U
+
+-- theorem subspace_open (T: Set (Set X)) (A: Set X) {U: Set X} (hU: U ∈ T):
+--   Subtype.val ⁻¹' (U ∩ A) ∈ subspace T A := by
+--   exists U
+
 
 -- TODO: show if U is open in T then U ∩ A is open in A
 
@@ -1064,22 +1091,21 @@ theorem product_topology_is_topology {TX: Set (Set X)} {TY: Set (Set Y)}
   apply is_base_iff_unions_topology.mp
   apply is_base_iff_base_conditions.mpr
   constructor
-  · ext x
+  · ext
     constructor
-    intro; trivial
-    intro
-    exists ⊤
-    constructor
-    exists ⊤, ⊤
-    constructor
-    exact univ_open hTX
-    constructor
-    exact univ_open hTY
-    simp [Set.prod]
-    assumption
-  · intro B₁ hB₁ B₂ hB₂ x hx
-    obtain ⟨U₁, V₁, hUV₁₁, hUV₁₂, hUV₁₃⟩ := hB₁
-    obtain ⟨U₂, V₂, hUV₂₁, hUV₂₂, hUV₂₃⟩ := hB₂
+    · intro; trivial
+    · intro
+      exists ⊤
+      constructor
+      · exists ⊤, ⊤
+        repeat' constructor
+        · exact univ_open hTX
+        · exact univ_open hTY
+        · simp [Set.prod]
+      ·   assumption
+  · intro _ hB₁ _ hB₂ _ _
+    obtain ⟨U₁, V₁, hUV₁₁, hUV₁₂, _⟩ := hB₁
+    obtain ⟨U₂, V₂, hUV₂₁, hUV₂₂, _⟩ := hB₂
     exists Set.prod (U₁ ∩ U₂) (V₁ ∩ V₂)
     constructor
     exists U₁ ∩ U₂, V₁ ∩ V₂

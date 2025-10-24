@@ -233,3 +233,11 @@ theorem hausdorff_iff_diagonal_closed {T: Set (Set X)} (hT: IsTopology T): hausd
 
 theorem continuous_extension_dense_domain_unique {TX: Set (Set X)} {TY: Set (Set Y)} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
   sorry
+
+def regular (T: Set (Set X)): Prop :=
+  ∀ x, ∀ A: Set X, x ∉ A → closedset T A → ∃ U V, U ∈ T ∧ V ∈ T ∧ x ∈ U ∧ A ⊆ V ∧ U ∩ V = ∅
+
+def T3 (T: Set (Set X)): Prop :=
+  hausdorff T ∧ regular T
+
+-- def completely_regular (T: Set (Set X)) := sorry

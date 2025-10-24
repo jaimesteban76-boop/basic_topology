@@ -7,7 +7,8 @@ set_option linter.style.multiGoal false
 
 universe u v
 
-variable {X Y : Type*}
+variable {X Y D: Type*}
+
 
 /-- A relation between `X` and `Y` is a binary predicate `X → Y → Prop`. -/
 def Relation (X : Type u) (Y : Type v) : Type (max u v) :=
@@ -18,9 +19,9 @@ def Endorelation (X : Type u) : Type u :=
   Relation X X
 
 /-- A preorder is a reflexive and transitive relation. -/
-structure preorder {X : Type u} (R : Relation X X) : Prop where
+structure preorder (R : Endorelation X) : Prop where
   reflexive : ∀ x, R x x
-  transitive : ∀ x y z, (R x y ∧ R y z) → R x z
+  transitive : ∀ x y z, R x y → R y z → R x z
 
 /-- A directed set is a preorder where any two elements have an upper bound. -/
 structure directed_set {X : Type u} (R : Relation X X) : Prop extends preorder R where
