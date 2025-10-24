@@ -1,19 +1,8 @@
-/-
-
-Formalization of basic point-set topology.
-
-- Mathlib docs: https://leanprover-community.github.io/mathlib4_docs/
-- Loogle: https://loogle.lean-lang.org/
-- editor shortcuts:
-  - mathcal characters e.g. ℬ, 𝒩, 𝒪, 𝒯, 𝒰 are \McB, \McN, \McU, \McT, \McU
-  - type subscripts (₁, ₂, ₃) in the editor via \1, \2, \3
-  - type sUnion (⋃₀) and sInter (⋂₀) via \sU and \sI
-
--/
-
 import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Data.ENNReal.Basic
 import Mathlib.Data.ENNReal.Inv
+import basic_topology.T0_topology
+import basic_topology.T1_metric
 import basic_topology.T2_separation
 
 set_option linter.style.commandStart false
@@ -22,6 +11,7 @@ set_option linter.dupNamespace false
 set_option linter.style.multiGoal false
 
 variable {X Y D: Type*}
+
 -- limit of a sequence in terms of the tail
 def tail (x: Nat → X) (t: Nat): Nat → X :=
   fun n => x (t + n)
@@ -65,8 +55,8 @@ theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetri
   obtain ⟨ t,ht⟩ := this
   use t
   intro x hx
-  apply hU.right.right
-  apply hR.right
+  apply hU.2.2
+  apply hR.2
   apply ht
   exact hx
 def adherent_value (T: Set (Set X)) (x: Nat → X) (a: X): Prop :=
@@ -77,7 +67,7 @@ def adherent_value (T: Set (Set X)) (x: Nat → X) (a: X): Prop :=
 -- a is adherent iff exists subsequence converging to a
 
 -- limits are unique in a hausdorff space
-theorem hausdorff_limit_unique (T: Set (Set X)) (h: hausdorff T) (x: Nat → X) (l1 l2: X) (h1: converges T x l1) (h2: converges T x l2): l1 = l2 := by
+theorem hausdorff_limit_unique_sequences (T: Set (Set X)) (h: hausdorff T) (x: Nat → X) (l1 l2: X) (h1: converges T x l1) (h2: converges T x l2): l1 = l2 := by
   by_contra h3
   simp[converges] at h1
   simp[converges] at h2
@@ -134,7 +124,8 @@ theorem hausdorff_limit_unique (T: Set (Set X)) (h: hausdorff T) (x: Nat → X) 
     simp [Set.range, tail ]
     apply hv1
     simp [Set.range, tail ]
-  simp_all
+  tauto
+
 
 -- prop: adherent points preserved by sequences
 

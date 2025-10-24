@@ -1,5 +1,4 @@
 import basic_topology.T0_topology
-import basic_topology.T3_sequences
 
 set_option linter.style.commandStart false
 set_option linter.style.longLine false
@@ -30,10 +29,6 @@ structure directed_set {X : Type u} (R : Relation X X) : Prop extends preorder R
 
 def net_converges {X : Type u} {D : Type v} (T: Set (Set X)) (R: Relation D D) (a: D -> X) (x: X) : Prop :=
   ∀ U ∈ Nbhds T x, ∃ i₀, ∀ j, R i₀ j → a j ∈ U
-
--- A helper for the image of a net.
-def f_net_converges {X Y : Type u} {D : Type v} (TY: Set (Set Y)) (R: Relation D D) (f: X -> Y) (a: D -> X) (y: Y) : Prop :=
-  net_converges TY R (f ∘ a) y
 
 def neighborhood_direction (T: Set (Set X)) (x: X): Endorelation (Nbhds T x) :=
   fun N1 N2 => N2.1 ⊆ N1.1
