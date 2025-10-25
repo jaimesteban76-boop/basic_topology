@@ -1,15 +1,15 @@
-
+import basic_topology.Relation
 import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Order.SetNotation
 import Mathlib.Data.Set.Lattice
 
 set_option linter.style.multiGoal false
 
-variable {X Y: Type*}
+variable {X Y Z: Type*}
 
 /-
 
-Definition of topological space. Like for metric spaces:
+Definition of topological space. Like for metric spaces :
 - Given a type X and a collection of subsets 𝒯, `IsTopology 𝒯` is the statement that 𝒯 forms a topology.
 - `Topology X` is the type of all topologies on `X`.
 - `TopologicalSpace` is the type of all topological spaces.
@@ -24,6 +24,13 @@ class Family (X: Type u) where
 class Topology (X: Type u) extends Family X where
   union_open: ∀ 𝒰 ⊆ Open, ⋃₀ 𝒰 ∈ Open
   inter_finite_open: ∀ 𝒰 ⊆ Open, Finite 𝒰 → ⋂₀ 𝒰 ∈ Open
+
+structure TopologicalSpace: Type (u + 1) where
+  points: Type u
+  topology: Topology points
+
+def TopologicalSpace': Type (u + 1) :=
+  Σ X: Type u, Topology X
 
 open Family Topology
 
@@ -77,8 +84,22 @@ theorem seq_union_open [Topology X] {U: Nat → Set X} (h: ∀ n, Open (U n)): O
 def Closed [Topology X] (A: Set X): Prop :=
   Open Aᶜ
 
+def ContinuousAt [Topology X] [Topology Y] (f: X → Y) (x: X): Prop :=
+  ∀ V, Open V → Open (f ⁻¹' V)
+
 def Continuous [Topology X] [Topology Y] (f: X → Y): Prop :=
   ∀ V, Open V → Open (f ⁻¹' V)
+
+def Function.id {X: Type u}: X → X :=
+  fun x => x
+
+theorem Continuous.id [Topology X]: Continuous (@Function.id X) := by
+  intro V
+  exact fun h => h
+
+theorem Continuous.comp [Topology X] [Topology Y] [Topology Z] {f: X → Y} {g: Y → Z}
+  (hf: Continuous f) (hg: Continuous g): Continuous (g ∘ f) := by
+  sorry
 
 class Distance (D: Type u) where
 
@@ -91,3 +112,67 @@ instance (X: Type u) (D: Type v) [Distance D] [Metric X D]: Topology X :=
 
 example [Distance D] [Metric X D] [Metric Y D] (f: X → Y) (h: Continuous f): True :=
   sorry
+
+def Connected (T: Topology X): Prop :=
+  ∀ U V: Set X, Open U → Open V → U.Nonempty → V.Nonempty → U ∪ V = Set.univ → (U ∩ V).Nonempty
+
+noncomputable def Function.Inverse {f: X → Y} (h: Function.Bijective f): Y → X :=
+  Classical.choose (Function.bijective_iff_has_inverse.mp h)
+
+structure Homeomorphism (X: Type u) (Y: Type v) [Topology X] [Topology Y] where
+  map: X → Y
+  inv: Y → X
+  map_continuous: Continuous map
+  inv_continuous: Continuous inv
+  id_left: inv ∘ map = id
+  id_right: map ∘ inv = id
+
+def Homeomorphism.id [Topology X]: Homeomorphism X X := {
+  map := Function.id
+  inv := Function.id
+  map_continuous := Continuous.id
+  inv_continuous := Continuous.id
+  id_left := rfl
+  id_right := rfl
+}
+
+def Homeomorphism.comp [Topology X] [Topology Y] [Topology Z] (f: Homeomorphism X Y) (g: Homeomorphism Y Z): Homeomorphism X Z := {
+  map := g.map ∘ f.map
+  inv := f.inv ∘ g.inv
+  map_continuous := Continuous.comp f.map_continuous g.map_continuous
+  inv_continuous := Continuous.comp g.inv_continuous f.inv_continuous
+  id_left := by
+    rw [Function.comp_assoc, ←Function.comp_assoc g.inv]
+    simp [g.id_left, f.id_left]
+  id_right := by
+    rw [Function.comp_assoc, ←Function.comp_assoc f.map]
+    simp [f.id_right, g.id_right]
+}
+
+def Homeomorphic (X: Type u) (Y: Type v) [Topology X] [Topology Y]: Prop :=
+  Nonempty (Homeomorphism X Y)
+
+def Homeomorphic.relation: Endorelation TopologicalSpace :=
+  fun X Y => @Homeomorphic _ _ X.topology Y.topology
+
+theorem Homeomorphic.reflexive: Reflexive' Homeomorphic.relation := by
+  intro X
+  use id, id
+  sorry
+  sorry
+  rfl; rfl
+
+theorem Homeomorphic.symmetric: Symmetric' Homeomorphic.relation := by
+  intro X Y h
+  sorry
+
+theorem Homeomorphic.transitive: Transitive' Homeomorphic.relation := by
+  intro X Y h
+  sorry
+
+theorem Homeomorphic.equivalence: Equivalence Homeomorphic.relation := by
+  sorry
+
+-- a property is called a topological property if it's preserved under homeomorphism
+def TopologicalProperty (P: TopologicalSpace → Prop): Prop :=
+  ∀ X Y, Homeomorphic.relation X Y → P X → P Y

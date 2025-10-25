@@ -1,20 +1,18 @@
-
-import basic_topology.T3_sequences
+import basic_topology.Metric
+import basic_topology.Sequence
 
 variable {X Y D: Type*}
-
-
 
 -- cauchy sequence in terms of diameters of tails
 def cauchy [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X): Prop :=
   ∀ ε, ⊥ < ε → ∃ t, ∀ m n, t ≤ m → t ≤ n → d (x m) (x n) < ε
 
-def cauchy_with_top [CompleteDistanceSpace D] (d: X → X → D) (x: Nat → X): Prop :=
-  ∀ ε, ⊥ < ε → ∃ t, diameter d (Set.range (tail x t)) < ε
+-- def cauchy_with_top [CompleteDistanceSpace D] (d: X → X → D) (x: Nat → X): Prop :=
+--   ∀ ε, ⊥ < ε → ∃ t, diameter d (Set.range (tail x t)) < ε
 
 
-def cauchy_sequence_diameter [CompleteDistanceSpace D] (d: X → X → D) (x: Nat → X): cauchy d x ↔ ∀ r, ⊥ < r → ∃ t, diameter d (Set.range (tail x t)) < r := by
-  sorry
+-- def cauchy_sequence_diameter [CompleteDistanceSpace D] (d: X → X → D) (x: Nat → X): cauchy d x ↔ ∀ r, ⊥ < r → ∃ t, diameter d (Set.range (tail x t)) < r := by
+--   sorry
 
 theorem convergent_cauchy [DistanceSpaceStruct D] {d: X → X → D} {x: Nat → X} (h: convergent_distance d x): cauchy d x := by
   sorry
@@ -26,7 +24,7 @@ def complete [DistanceSpaceStruct D] (d: X → X → D): Prop :=
   ∀ x, cauchy d x → convergent_distance d x
 
 -- If A ⊆ X is complete then it is closed.
--- todo : use subspace metric?
+-- todo: use subspace metric?
 example [DistanceSpaceStruct D] (d: X → X → D) (A: Set X) (h: complete (fun (a b: A) => d a b)): metric_closedset d A := by
   sorry
 
@@ -47,6 +45,6 @@ structure Completion [DistanceSpace D] {X X': Type*} (d: X → X → D) (d': X' 
 example {X X0 X1: Type*} [DistanceSpace D] (d: X → X → D)
   (d0: X0 → X0 → D) (d1: X1 → X1 → D)
   (i0: X → X0) (i1: X → X1)
-  (h0: Completion d d0 i0) (h1: Completion d d1 i1):
+  (h0: Completion d d0 i0) (h1: Completion d d1 i1) :
   ∃! f: X0 → X1, isometric_isomorphism d0 d1 f := by
   sorry
