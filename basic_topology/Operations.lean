@@ -3,6 +3,37 @@ import basic_topology.Neighborhood
 
 variable {X Y: Type*}
 
+-- def Interior (𝒯: Family X) (A: Set X): Set X :=
+--   ⋃₀ {U | U ∈ 𝒯 ∧ U ⊆ A}
+
+-- theorem Interior.sup (𝒯: Family X) (A: Set X) {U: Set X} (h₁: U ∈ 𝒯) (h₂: U ⊆ A): U ⊆ Interior 𝒯 A := by
+--   simp [Interior]
+
+
+-- theorem Interior.open (𝒯: Family X) (h: IsTopology 𝒯) (A: Set X): Interior 𝒯 A ∈ 𝒯 := by
+--   apply h.sUnion
+--   apply Set.sep_subset
+
+-- theorem Interior.monotone (𝒯: Family X) {A B: Set X} (h: A ⊆ B): Interior 𝒯 A ⊆ Interior 𝒯 B := by
+--   simp [Interior]
+--   intro U h1 h2
+--   apply Set.subset_sUnion_of_subset _ _ (fun _ h => h)
+--   apply Set.mem_sep
+--   · exact h1
+--   · exact le_trans h2 h
+
+-- theorem Interior.empty (𝒯: Family X): Interior 𝒯 ∅ = ∅ := by
+--   simp [Interior]
+
+-- theorem Interior.univ {𝒯: Family X} (h: IsTopology 𝒯): Interior 𝒯 Set.univ = Set.univ := by
+--   simp [Interior]
+--   apply Set.eq_univ_of_univ_subset
+--   intro _ _
+--   exists Set.univ
+--   constructor
+--   · exact univ_open h
+--   · simp
+
 def interior_point (𝒯: Family X) (A: Set X) (x: X): Prop :=
   neighborhood 𝒯 A x
 
@@ -206,8 +237,8 @@ theorem closure_idempotent (𝒯: Family X) (A: Set X): closure 𝒯 (closure �
   simp [closure_eq, interior_idempotent]
 
 -- the closure is closed
-theorem closure_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A: Set X): closedset 𝒯 (closure 𝒯 A) := by
-  simp [closure_eq, closedset]
+theorem closure_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A: Set X): Closed 𝒯 (closure 𝒯 A) := by
+  simp [closure_eq, Closed]
   apply interior_open h𝒯
 
 -- closure is a superset of the original
@@ -230,8 +261,8 @@ theorem closure_eq_inter_closed_supsets {𝒯: Family X} {A: Set X}: closure �
   rw [interior_eq_union_open_subsets]
   sorry
 
-theorem closed_iff_eq_closure {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A: Set X): closedset 𝒯 A ↔ A = closure 𝒯 A := by
-  simp [closure_eq, closedset]
+theorem closed_iff_eq_closure {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A: Set X): Closed 𝒯 A ↔ A = closure 𝒯 A := by
+  simp [closure_eq, Closed]
   calc
     Aᶜ ∈ 𝒯 ↔ Aᶜ  = interior 𝒯 Aᶜ      := by apply open_iff_eq_interior h𝒯
          _ ↔ Aᶜᶜ = (interior 𝒯 Aᶜ)ᶜ   := by apply symm compl_inj_iff
@@ -269,7 +300,7 @@ theorem frontier_closure_eq (𝒯: Family X) (A: Set X): frontier 𝒯 (closure 
                            _ = closure 𝒯 A ∩ closure 𝒯 Aᶜ := sorry
                            _ = frontier 𝒯 A := by rw [frontier_eq]
 
-theorem frontier_closed (𝒯: Family X) (A: Set X): closedset 𝒯 (frontier 𝒯 A) := by
+theorem frontier_closed (𝒯: Family X) (A: Set X): Closed 𝒯 (frontier 𝒯 A) := by
   sorry
 
 -- TODO: is basic neighborhood worth defining?

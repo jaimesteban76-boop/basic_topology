@@ -16,7 +16,7 @@ theorem open_neighborhood {U: Set X} {x: X} (h1: x ∈ U) (h2: U ∈ 𝒯): neig
   exists U
 
 -- A set is open iff. it is a neighborhood of all its points.
-theorem open_iff_neighborhood_of_all_points (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ ∀ x ∈ A, neighborhood 𝒯 A x := by
+theorem open_iff_neighborhood_of_all_points (h𝒯: IsTopology 𝒯) (A: Set X): Open 𝒯 A ↔ ∀ x ∈ A, neighborhood 𝒯 A x := by
   constructor
   · intro hA x hx
     exists A

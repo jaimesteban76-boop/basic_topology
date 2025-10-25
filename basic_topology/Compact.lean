@@ -28,5 +28,5 @@ theorem compactset_iff_compact_subspace (T: Family X) (A: Set X) :
     · sorry
     · sorry
 
-theorem compact_closed_subset (hT: hausdorff T) {K: Set X} (hK: compactset T K): closedset T K := by
+theorem compact_closed_subset (hT: hausdorff T) {K: Set X} (hK: compactset T K): Closed T K := by
   sorry

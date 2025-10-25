@@ -73,9 +73,9 @@ theorem indiscrete_base (X: Type*): base {∅, @Set.univ X} {@Set.univ X} := by
     | Or.inr _ => exists {Set.univ}; simp_all
 
 -- sierpiński base
-theorem sierpiński_base: base (sierpiński_opensets) {{true}, {false, true}} := by
+theorem sierpiński_base: base SierpińskiOpen {{true}, {false, true}} := by
   constructor
-  · simp [sierpiński_opensets]
+  · simp [SierpińskiOpen]
   · intro U hU
     by_cases false ∈ U
     · exists {{false, true}}

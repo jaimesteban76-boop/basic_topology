@@ -14,17 +14,17 @@ variable {X Y D: Type*}
 -- we will give them the prefix `metric_` since we need these names later
 -- note its important that 0 < r in the definition of open set, even though this isnt required to be an open ball.
 -- (otherwise every set is trivially open by taking r=0 at every point.)
-def metric_openset [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): Prop :=
+def metric_open [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): Prop :=
   ∀ x ∈ A, ∃ r, ⊥ < r ∧ openball d x r ⊆ A
 
-def metric_closedset [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): Prop :=
-  metric_openset d Aᶜ
+def metric_closed [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): Prop :=
+  metric_open d Aᶜ
 
-def metric_clopenset [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): Prop :=
-  metric_openset d A ∧ metric_closedset d A
+def metric_clopen [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): Prop :=
+  metric_open d A ∧ metric_closed d A
 
 -- The empty set is clopen
-theorem metric_empty_clopen [DistanceSpace D] [Nontrivial D] (d: X → X → D): metric_clopenset d ∅ := by
+theorem metric_empty_clopen [DistanceSpace D] [Nontrivial D] (d: X → X → D): metric_clopen d ∅ := by
   constructor
   · intro _ _
     exists ⊥
@@ -37,14 +37,14 @@ theorem metric_empty_clopen [DistanceSpace D] [Nontrivial D] (d: X → X → D):
     · exact fun _ _ => hx
 
 -- If A is clopen then Aᶜ is clopen
-theorem clopen_implies_compl_clopen [DistanceSpaceStruct D] (d: X → X → D) {A: Set X} (h: metric_clopenset d A): metric_clopenset d Aᶜ := by
+theorem clopen_implies_compl_clopen [DistanceSpaceStruct D] (d: X → X → D) {A: Set X} (h: metric_clopen d A): metric_clopen d Aᶜ := by
   constructor
   · exact h.right
-  · simp [metric_closedset]
+  · simp [metric_closed]
     exact h.left
 
 -- A is clopen iff. Aᶜ is clopen
-theorem clopen_iff_compl_clopen [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): metric_clopenset d A ↔ metric_clopenset d Aᶜ := by
+theorem clopen_iff_compl_clopen [DistanceSpaceStruct D] (d: X → X → D) (A: Set X): metric_clopen d A ↔ metric_clopen d Aᶜ := by
   constructor
   · exact clopen_implies_compl_clopen d
   · intro h
@@ -52,13 +52,13 @@ theorem clopen_iff_compl_clopen [DistanceSpaceStruct D] (d: X → X → D) (A: S
     exact clopen_implies_compl_clopen d h
 
 -- The whole space is clopen
-theorem metric_univ_clopen [DistanceSpace D] [Nontrivial D] (d: X → X → D): metric_clopenset d Set.univ := by
+theorem metric_univ_clopen [DistanceSpace D] [Nontrivial D] (d: X → X → D): metric_clopen d Set.univ := by
   rw [←Set.compl_empty]
   exact (clopen_iff_compl_clopen d ∅).mp (metric_empty_clopen d)
 
 -- Open ball is open
 -- TODO this needs work since we can't subtract..
-theorem openball_open [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) (r: D): metric_openset d (openball d x r) := by
+theorem openball_open [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) (r: D): metric_open d (openball d x r) := by
   intro z hz
   sorry
   -- exists r - d x z
@@ -67,7 +67,7 @@ theorem openball_open [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: 
   -- · exact openball_mem_smaller_ball hd
 
 -- Closed ball is closed
-theorem closedball_closed [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) (r: D): metric_closedset d (closedball d x r) := by
+theorem closedball_closed [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) (r: D): metric_closed d (closedball d x r) := by
   intro x0 hx0
   sorry
   -- exists d x x0 - r
@@ -79,7 +79,7 @@ theorem closedball_closed [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) 
 def openballs [DistanceSpaceStruct D] (d: X → X → D): Family X :=
   ⋃ (x: X), ⋃ (r: D), {openball d x r}
 
-theorem open_iff_sUnion_of_balls [DistanceSpace D] (d: X → X → D) (hd: IsMetric d) (A: Set X): metric_openset d A ↔ ∃ 𝒰 ⊆ openballs d, A = ⋃₀ 𝒰 := by
+theorem open_iff_sUnion_of_balls [DistanceSpace D] (d: X → X → D) (hd: IsMetric d) (A: Set X): metric_open d A ↔ ∃ 𝒰 ⊆ openballs d, A = ⋃₀ 𝒰 := by
   apply Iff.intro
   · intro h
     exists fun U => U ⊆ A ∧ U ∈ openballs d
@@ -115,10 +115,10 @@ theorem open_iff_sUnion_of_balls [DistanceSpace D] (d: X → X → D) (hd: IsMet
     --     _ ⊆ ⋃₀ 𝒰          := Set.subset_sUnion_of_subset 𝒰 U (fun ⦃a⦄ a ↦ a) hU1
 
 -- the set of all open sets in a metric space
-def metric_opensets [DistanceSpace D] (d: X → X → D): Family X :=
- {A | metric_openset d A}
+def metric_opens [DistanceSpace D] (d: X → X → D): Family X :=
+ {A | metric_open d A}
 
-theorem openballs_sub_opensets [DistanceSpace D] {d: X → X → D} (hd: IsMetric d): openballs d ⊆ metric_opensets d := by
+theorem openballs_sub_opens [DistanceSpace D] {d: X → X → D} (hd: IsMetric d): openballs d ⊆ metric_opens d := by
   intro _ hU
   simp_all [openballs]
   obtain ⟨x, r, hU⟩ := hU
@@ -126,7 +126,7 @@ theorem openballs_sub_opensets [DistanceSpace D] {d: X → X → D} (hd: IsMetri
   exact openball_open hd x r
 
 -- Every set is open in the topology generated by the discrete metric.
-theorem discrete_opensets (X D: Type*) [CompleteDistanceSpace D] [Nontrivial D] [DecidableEq X]: metric_opensets (discrete_metric X D) = Set.univ := by
+theorem discrete_opens (X D: Type*) [CompleteDistanceSpace D] [Nontrivial D] [DecidableEq X]: metric_opens (discrete_metric X D) = Set.univ := by
   apply Set.eq_univ_of_univ_subset
   intro A hA x hx
   exists ⊤
@@ -135,7 +135,7 @@ theorem discrete_opensets (X D: Type*) [CompleteDistanceSpace D] [Nontrivial D] 
   · sorry -- simp [discrete_openball_singleton x bot_lt_top]
 
 -- in a metric space, arbitrary unions of open sets are open (doesnt actually depend on d being a metric)
-theorem metric_open_sUnion [DistanceSpace D] {d: X → X → D} {C: Family X} (h: C ⊆ metric_opensets d): ⋃₀ C ∈ metric_opensets d := by
+theorem metric_open_sUnion [DistanceSpace D] {d: X → X → D} {C: Family X} (h: C ⊆ metric_opens d): ⋃₀ C ∈ metric_opens d := by
   intro z ⟨U, hU1, hU2⟩
   obtain ⟨r, hr1, hr2⟩ := h hU1 z hU2
   exists r
@@ -144,7 +144,7 @@ theorem metric_open_sUnion [DistanceSpace D] {d: X → X → D} {C: Family X} (h
   · exact Set.subset_sUnion_of_subset C U hr2 hU1
 
 -- in a metric space, finite intersections of open sets are open
-theorem metric_open_finite_sInter [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) {C: Family X} (h1: C ⊆ metric_opensets d) (h2: Finite C): ⋂₀ C ∈ metric_opensets d := by
+theorem metric_open_finite_sInter [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) {C: Family X} (h1: C ⊆ metric_opens d) (h2: Finite C): ⋂₀ C ∈ metric_opens d := by
   intro z hz
   simp at hz
 
@@ -153,33 +153,33 @@ theorem metric_open_finite_sInter [DistanceSpace D] {d: X → X → D} (hd: IsMe
 
 
 -- in a metric space every open ball of positive radius is a neighborhood
-theorem openball_neighborhood [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) {r: D} (hr: ⊥ < r): neighborhood (metric_opensets d) (openball d x r) x := by
+theorem openball_neighborhood [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) {r: D} (hr: ⊥ < r): neighborhood (metric_opens d) (openball d x r) x := by
   exists openball d x r
   repeat' (apply And.intro)
-  · apply openballs_sub_opensets hd
+  · apply openballs_sub_opens hd
     simp [openballs]
   · exact (openball_mem_iff hd x r).mpr hr
   · rfl
 
--- the opensets in a metric space form a topology
-theorem metric_opensets_is_topology [DistanceSpace D] {d: X → X → D} (hd: IsMetric d): IsTopology (metric_opensets d) := {
+-- the opens in a metric space form a topology
+theorem metric_opens_is_topology [DistanceSpace D] {d: X → X → D} (hd: IsMetric d): IsTopology (metric_opens d) := {
   sUnion := by intro; exact metric_open_sUnion
   finite_sInter := by intro; exact metric_open_finite_sInter hd
 }
 
 -- given a metric on X, put a topology on X
 def metric_to_topology [DistanceSpace D] (d: Metric X D): Topology X := {
-  opensets := metric_opensets d.distance
-  is_topology := metric_opensets_is_topology d.is_metric
+  Open := metric_opens d.distance
+  is_topology := metric_opens_is_topology d.is_metric
 }
 
-def MetricSpace.opensets [DistanceSpace D] (M: MetricSpace D): Set (Set M.points) :=
-  metric_opensets M.distance
+def MetricSpace.opens [DistanceSpace D] (M: MetricSpace D): Set (Set M.points) :=
+  metric_opens M.distance
 
 def metrizable (𝒯: Topology X) (D: Type*) [DistanceSpace D]: Prop :=
   ∃ d: Metric X D, metric_to_topology d = 𝒯
 
--- theorem isometry_homeomorphic_image [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} {hX: IsMetric dX} {hY: IsMetric dY} {i: X → Y} (h: isometry dX dY i): homeomorphism (metric_opensets dX) (metric_opensets (submetric dY (Set.range i))) (Set.rangeFactorization i) := {
+-- theorem isometry_homeomorphic_image [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} {hX: IsMetric dX} {hY: IsMetric dY} {i: X → Y} (h: isometry dX dY i): homeomorphism (metric_opens dX) (metric_opens (submetric dY (Set.range i))) (Set.rangeFactorization i) := {
 --   bijection := by
 --     constructor
 --     · have := isometry_is_injective hX hY i h
@@ -190,8 +190,8 @@ def metrizable (𝒯: Topology X) (D: Type*) [DistanceSpace D]: Prop :=
 --   continuous_inverse := sorry
 -- }
 
-theorem continuous_metric_at_iff [DistanceSpace D] (dX: X → X → D) (dY: Y → Y → D) (f: X → Y) (x: X): continuous_metric_at dX dY f x ↔ continuous_at (metric_opensets dX) (metric_opensets dY) f x := by
+theorem continuous_metric_at_iff [DistanceSpace D] (dX: X → X → D) (dY: Y → Y → D) (f: X → Y) (x: X): continuous_metric_at dX dY f x ↔ continuous_at (metric_opens dX) (metric_opens dY) f x := by
   sorry
 
-theorem continuous_metric_iff [DistanceSpace D] (dX: X → X → D) (dY: Y → Y → D) (f: X → Y) (x: X): continuous_metric dX dY f ↔ continuous (metric_opensets dX) (metric_opensets dY) f := by
+theorem continuous_metric_iff [DistanceSpace D] (dX: X → X → D) (dY: Y → Y → D) (f: X → Y) (x: X): continuous_metric dX dY f ↔ continuous (metric_opens dX) (metric_opens dY) f := by
   sorry

@@ -7,15 +7,30 @@ variable {X Y D: Type*}
 
 set_option linter.style.multiGoal false
 
-def separable_by_opensets (T: Family X): Endorelation (Set X) :=
-  fun A B => ∃ U V, U ∈ T ∧ V ∈ T ∧ Disjoint U V ∧ A ⊆ U ∧ B ⊆ V
+def OpenSeparable (T: Family X): Endorelation (Set X) :=
+  fun A B => ∃ U V, Open T U ∧ Open T V ∧ Disjoint U V ∧ A ⊆ U ∧ B ⊆ V
 
-def separable_by_continuous (T: Family X): Endorelation (Set X) :=
-  sorry -- fun A B => ∃ f: X → I₀₁, continuous T UnitIntervalMetricSpace.opensets f ∧ ∀ a ∈ A , f a = 0 ∧ ∀ b ∈ B, f b = 1
+-- Separability by continuous function with respect to a target space I (which is normally the unit interval) with distinguished points 0, 1.
 
-theorem separable_by_cont_separable_by_open {T: Family X} {A B: Set X} (h: separable_by_continuous T A B): separable_by_opensets T A B := by
-  -- idea: take U = f⁻¹([0, 1/2)), V = f⁻¹((1/2, 1])
-  sorry
+variable {I: Type*} [Zero I] [One I]
+
+def FunctionSeparable (T: Family X) (T': Family I): Endorelation (Set X) :=
+  fun A B => ∃ f, Continuous T T' f ∧ (∀ a ∈ A, f a = 0) ∧ (∀ b ∈ B, f b = 1)
+
+-- Assuming 0, 1 are distinguishable by open sets in the target space, then separability by continuous function implies separability by open sets.
+
+variable {T: Family X} {TI: Family I}
+
+theorem FunctinSeparable_implies_OpenSeparable {A B: Set X} (h₀: OpenSeparable TI {0} {1}) (h: FunctionSeparable T TI A B): OpenSeparable T A B := by
+  obtain ⟨U, V, h₁, h₂, h₃, h₄, h₅⟩ := h₀
+  obtain ⟨f, h₆, h₇, h₈⟩ := h
+  exists f ⁻¹' U, f ⁻¹' V
+  repeat' constructor
+  · exact h₆ U h₁
+  · exact h₆ V h₂
+  · exact Disjoint.preimage f h₃
+  · exact fun a ha ↦ h₄ (h₇ a ha)
+  · exact fun b hb ↦ h₅ (h₈ b hb)
 
 -- fréchet and hausdorff spaces
 def fréchet (𝒯: Family X): Prop :=
@@ -25,23 +40,29 @@ def fréchet (𝒯: Family X): Prop :=
 def hausdorff (𝒯: Family X): Prop :=
   ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ Disjoint U V
 
+-- Alternative (preferable?) Hausdorff definition not referencing neighborhoods.
+def Hausdorff (𝒯: Family X): Prop :=
+  ∀ x y, x ≠ y → OpenSeparable 𝒯 {x} {y}
+
 def regular (T: Family X): Prop :=
-  ∀ x A, x ∉ A → closedset T A → separable_by_opensets T A {x}
+  ∀ x A, x ∉ A → Closed T A → OpenSeparable T A {x}
 
 def regular_hausdorff (T: Family X): Prop :=
   hausdorff T ∧ regular T
 
-def completely_regular (T: Family X): Prop :=
-  ∀ A x, x ∉ A → closedset T A → separable_by_continuous T A {x}
+def completely_regular (T: Family X) (TI: Family I): Prop :=
+  ∀ A x, x ∉ A → Closed T A → FunctionSeparable T TI A {x}
 
-def tychonoff (T: Family X): Prop :=
-  hausdorff T ∧ completely_regular T
+def tychonoff (T: Family X) (TI: Family I): Prop :=
+  hausdorff T ∧ completely_regular T TI
 
-def normal (T: Set ( Set X)): Prop :=
-  ∀A B , closedset T A → closedset T B → Disjoint A B → separable_by_opensets T A B
+def normal (T: Family X): Prop :=
+  ∀ A B , Closed T A → Closed T B → Disjoint A B → OpenSeparable T A B
 
 def normal_hausdorff (T :Family X): Prop :=
   hausdorff T ∧ normal T
+
+-- We will construct the nontrivial implications down the chain.
 
 theorem hausdorff_implies_fréchet (𝒯: Family X): hausdorff 𝒯 → fréchet 𝒯 := by
   intro h x y h1
@@ -51,7 +72,15 @@ theorem hausdorff_implies_fréchet (𝒯: Family X): hausdorff 𝒯 → fréchet
   · exact hU1
   · exact hV1
   · exact Disjoint.notMem_of_mem_left h2 (neighborhood_mem hU1)
-  · exact Disjoint.notMem_of_mem_left (id (Disjoint.symm h2)) (neighborhood_mem hV1)
+  · exact Disjoint.notMem_of_mem_left (Disjoint.symm h2) (neighborhood_mem hV1)
+
+theorem completely_regular_implies_regular (h₀: OpenSeparable TI {0} {1}) (h: completely_regular T TI): regular T := by
+  intro x A h₁ h₂
+  exact FunctinSeparable_implies_OpenSeparable h₀ (h A x h₁ h₂)
+
+theorem normal_implies_completely_regular (h₀: OpenSeparable TI {0} {1}) (h: normal T): completely_regular T TI := by
+  intro A B h₁ h₂
+  sorry
 
 -- the discrete topology is hausdorff
 theorem discrete_hausdorff (X: Type*): hausdorff (@Set.univ (Set X)) := by
@@ -77,7 +106,7 @@ theorem indiscrete_nonhausdorff_iff (X: Type*): hausdorff {∅, @Set.univ X} ↔
   sorry
 
 -- Sierpiński space is non-hausdorff
-theorem sierpiński_nonhausdorff: ¬hausdorff (sierpiński_topology.opensets) := by
+theorem sierpiński_nonhausdorff: ¬hausdorff (sierpiński_topology.Open) := by
   apply not_forall.mpr
   exists true
   apply not_forall.mpr
@@ -109,7 +138,7 @@ lemma separated_balls [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) {x1 
 /-
 -- Every metric space is hausdorff.
 -- Proof: given two distinct points x, y, let r = d(x, y) / 2. Then B(x, r) and B(y, r) are disjoint neighborhoods.
-theorem metric_space_hausdorff {d: X → X → ENNReal} (hd: IsMetric d): hausdorff (metric_opensets d) := by
+theorem metric_space_hausdorff {d: X → X → ENNReal} (hd: IsMetric d): hausdorff (metric_Opens d) := by
   intro x y neq
   let r := d x y / 2
   have: d x y ≠ 0 := (dist_nonzero_iff hd).mpr neq
@@ -121,7 +150,7 @@ theorem metric_space_hausdorff {d: X → X → ENNReal} (hd: IsMetric d): hausdo
   · simp [separated_balls hd, r]
 
 -- If a space is not hausdorff, it is not metrizable
-theorem nonhausdorff_nonmetrizable {𝒯: Topology X} (h: ¬ hausdorff 𝒯.opensets): ¬ metrizable 𝒯 ENNReal := by
+theorem nonhausdorff_nonmetrizable {𝒯: Topology X} (h: ¬ hausdorff 𝒯.Opens): ¬ metrizable 𝒯 ENNReal := by
   intro ⟨d, hd⟩
   rw [←hd] at h
   exact h (metric_space_hausdorff d.is_metric)
@@ -136,7 +165,7 @@ theorem sierpiński_nonmetrizable: ¬ metrizable sierpiński_topology ENNReal :=
 -- the antidiscrete space is not frechte
 -- Let O1, O2 be topologies. If O1 ⊆ O2 then O1 (Hausdorff/Frechet) implies O2 (Hausdorff/Frechet)
 
-theorem frechet_iff (𝒯: Family X): fréchet 𝒯 ↔ ∀ x, closedset 𝒯 {x} := by
+theorem frechet_iff (𝒯: Family X): fréchet 𝒯 ↔ ∀ x, Closed 𝒯 {x} := by
   sorry
 
 -- show topology generated by [a, infty) is Frechet but not Hausdorff
@@ -163,10 +192,11 @@ theorem frechet_iff' (T: Family X): fréchet T ↔ ∀ x, {x} = Set.sInter (Nbhd
 
 -- equivalence of metrics
 
-theorem hausdorff_iff_diagonal_closed {T: Family X} (hT: IsTopology T): hausdorff T ↔ closedset (product_topology T T) (Set.diagonal X) := by
+theorem hausdorff_iff_diagonal_closed {T: Family X} (hT: IsTopology T): hausdorff T ↔ Closed (product_topology T T) (Set.diagonal X) := by
   constructor
   intro h
-  rw [closedset, openset, open_iff_neighborhood_of_all_points]
+  rw [Closed]
+  rw [open_iff_neighborhood_of_all_points]
   intro (x1, x2) hx
   obtain ⟨N1, N2, hN1, hN2, hN⟩ := h x1 x2 hx
   obtain ⟨U1, hU1⟩ := hN1
@@ -204,11 +234,11 @@ theorem hausdorff_iff_diagonal_closed {T: Family X} (hT: IsTopology T): hausdorf
     exact hy.2
   simp_all
   exact product_topology_is_topology hT hT
-  rw[closedset,hausdorff,Set.diagonal]
+  rw[Closed,hausdorff,Set.diagonal]
   intro hc x y hxy
   let xy := (x,y)
   have h1: xy∈ {p | p.1 = p.2}ᶜ := by exact hxy
-  rw[openset, open_iff_neighborhood_of_all_points] at hc
+  rw[open_iff_neighborhood_of_all_points] at hc
   apply hc at h1
   simp[neighborhood,product_topology] at h1
   obtain ⟨U,⟨ hU1,hU2,hU3⟩⟩  := h1

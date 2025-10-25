@@ -12,25 +12,19 @@ variable {X: Type u} {Y: Type v} {Δ: Type u}
 /-- A directed set is a preorder where any two elements have an upper bound. -/
 
 
-def UpperBounded (R: Relation X Y): Prop :=
+def upperbounded (R: Relation X Y): Prop :=
   ∀ x₁ x₂, ∃ y, R x₁ y ∧ R x₂ y
 
-structure Directed' (R: Endorelation X): Prop extends Preorder' R where
-  upperbounded: UpperBounded R
-
-class Net (X: Type u) where
-  Δ: Type u
-  le: Endorelation Δ
-  directed: Directed' le
-  net: Δ → X
+structure directed (R: Endorelation X): Prop extends Preorder' R where
+  upperbounded: upperbounded R
 
 def net_converges {X: Type u} {Δ: Type v} (T: Family X) (R: Relation Δ Δ) (a: Δ → X) (x: X): Prop :=
   ∀ U ∈ Nbhds T x, ∃ i₀, ∀ j, R i₀ j → a j ∈ U
 
 def neighborhood_direction (T: Family X) (x: X): Endorelation (Nbhds T x) :=
-  fun N1 N2 => N2.1 ⊆ N1.1
+  fun N₁ N₂ => N₂.val ⊆ N₁.val
 
-theorem neighborhood_direction_directed_set (T: Family X) (x: X) (hT: IsTopology T): (Directed' (neighborhood_direction T x)) := by
+theorem neighborhood_direction_directed_set (T: Family X) (x: X) (hT: IsTopology T): directed (neighborhood_direction T x) := by
   repeat constructor
   · intro Nx
     exact fun ⦃a⦄ a ↦ a
@@ -46,8 +40,8 @@ theorem neighborhood_direction_directed_set (T: Family X) (x: X) (hT: IsTopology
         exact neighborhood_binary_inter hT hN1 hN2
       · exact Set.inter_subset_right
 
-theorem continuous_at_iff_all_nets_converge {X: Type u} {TX: Set ( Set X)} {TY: Set (Set Y )} (hTX: IsTopology TX ) (f :X→ Y) (x0 :X) :
-  continuous_at TX TY f x0 ↔ ∀Δ: Type u , ∀ R: Endorelation Δ , Directed' R → ∀ x: Δ → X , net_converges TX R x x0 → net_converges TY R (f∘ x) (f x0) := by
+theorem continuous_at_iff_all_nets_converge {X: Type u} {T: Family X} {T': Family Y} (hT: IsTopology T) (f: X → Y) (x₀: X) :
+  continuous_at T T' f x₀ ↔ ∀ Δ: Type u, ∀ R, directed R → ∀ x: Δ → X , net_converges T R x x₀ → net_converges T' R (f ∘ x) (f x₀) := by
     constructor
     simp[net_converges]
     intro h_con Δ  R  d  hR hnx
@@ -67,12 +61,12 @@ theorem continuous_at_iff_all_nets_converge {X: Type u} {TX: Set ( Set X)} {TY: 
     intro h_con
     obtain ⟨ N,⟨ h1,h2⟩ ⟩ := h_con
     simp[Set.not_subset] at h2
-    let Δ := { N: Set X // N ∈ Nbhds TX x0 }
+    let Δ := { N: Set X // N ∈ Nbhds T x₀}
     let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
     use Δ, R
     constructor
     apply neighborhood_direction_directed_set
-    exact hTX
+    exact hT
     let x (d: Δ): X := Classical.choose (h2 d.1 d.2)
     have x_prop (d: Δ): x d ∈ d.1 ∧ f (x d) ∉ N := Classical.choose_spec (h2 d.1 d.2)
     use x
@@ -113,8 +107,7 @@ theorem Net.adherent_iff (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X)
   sorry
 
 theorem Net.closure_mem_iff (T: Family X) (A: Set X) (x: X) :
-  x ∈ closure T A ↔ ∃ Δ: Type u, ∃ R, Directed' R ∧ ∃ a: Δ → A, net_converges T R (Subtype.val ∘ a) x := by
+  x ∈ closure T A ↔ ∃ Δ: Type u, ∃ R, directed R ∧ ∃ a: Δ → A, net_converges T R (Subtype.val ∘ a) x := by
   sorry
 
 -- TODO: a is an adherent of image(x) iff. ∃ subnet y of x s.t. y → a.
-#check Subsingleton.allEq

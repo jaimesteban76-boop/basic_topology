@@ -16,20 +16,19 @@ def Relation (X: Type u) (Y: Type v): Type (max u v) :=
 def Endorelation (X: Type u): Type u :=
   Relation X X
 
-def Reflexive' (R: Endorelation X): Prop :=
+def reflexive (R: Endorelation X): Prop :=
   ∀ x, R x x
 
-def Symmetric' (R: Endorelation X): Prop :=
+def symmetric (R: Endorelation X): Prop :=
   ∀ x y, R x y → R y x
 
-def Transitive' (R: Endorelation X): Prop :=
+def transitive (R: Endorelation X): Prop :=
   ∀ x y z, R x y → R y z → R x z
 
 /-- A preorder is a reflexive and transitive relation. -/
-structure Preorder' (R: Endorelation X): Prop where
-  reflexive: Reflexive' R
-  transitive: Transitive' R
+structure preorder (R: Endorelation X): Prop where
+  reflexive: reflexive R
+  transitive: transitive R
 
-#check Equivalence
-structure Equivalence' (R: Endorelation X): Prop extends Preorder' R where
-  symmetric: Symmetric' R
+structure equivalence (R: Endorelation X): Prop extends preorder R where
+  symmetric: symmetric R

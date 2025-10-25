@@ -3,10 +3,10 @@ import basic_topology.Homeomorphism
 variable {X Y: Type*}
 
 def connected (T: Family X): Prop :=
-  ∀ U V: Set X, U ∈ T → V ∈ T → U.Nonempty → V.Nonempty → U ∪ V = Set.univ → (U ∩ V).Nonempty
+  ∀ U V: Set X, Open T U → Open T V → U.Nonempty → V.Nonempty → U ∪ V = Set.univ → (U ∩ V).Nonempty
 
 def connected_space (X: TopologicalSpace): Prop :=
-  connected X.topology.opensets
+  connected X.topology.Open
 
 -- connectedness is a topological property
 theorem connected_topological_property: topological_property connected_space := by

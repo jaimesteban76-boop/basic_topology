@@ -20,11 +20,11 @@ def convergent_distance [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X
   ∃ l, converges_distance d x l
 
 -- equivalent definition in a metric space
-theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetric d)(x: Nat → X) (l: X): converges (metric_opensets d) x l ↔ converges_distance d x l := by
+theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetric d)(x: Nat → X) (l: X): converges (metric_open d) x l ↔ converges_distance d x l := by
   constructor
   · intro h r hr
     let N := openball d l r
-    have h1: N ∈ Nbhds (metric_opensets d) l := by
+    have h1: N ∈ Nbhds (metric_open d) l := by
       apply openball_neighborhood
       exact hd
       exact hr
@@ -33,12 +33,15 @@ theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetri
   · intro h
     simp [converges]
     intro N hN
-    simp[converges_distance] at h
-    simp[Nbhds,neighborhood, metric_opensets,metric_openset] at hN
-    obtain ⟨ U,hU⟩ := hN
+    simp [converges_distance] at h
+    simp [Nbhds, neighborhood] at hN
+    obtain ⟨ U,hU₁, hU₂, hU₃⟩ := hN
     have h3: ∃r>0, openball d l r ⊆ U := by
-      apply hU.left
-      exact hU.right.left
+      obtain ⟨r, hr₁, hr₂⟩ := hU₁ l hU₂
+      exists r
+      constructor
+      exact pos_of_gt hr₁
+      exact hr₂
     obtain ⟨ R,hR⟩ := h3
     have: R>0 := by
       exact hR.left
@@ -46,7 +49,7 @@ theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetri
     obtain ⟨ t,ht⟩ := this
     use t
     intro x hx
-    apply hU.2.2
+    apply hU₃
     apply hR.2
     apply ht
     exact hx

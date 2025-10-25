@@ -20,10 +20,11 @@ def subspace (T: Family X) (A: Set X): Set (Set A) :=
   subspace_down A '' T
 
 -- basic helpers
-theorem subspace_open_exists {T: Family X} {A: Set X} {V: Set A} (hV: V ∈ subspace T A): ∃ U ∈ T, subspace_down A U = V := by
+theorem subspace_open_exists {T: Family X} {A: Set X} {V: Set A} (hV: Open (subspace T A) V): ∃ U ∈ T, subspace_down A U = V := by
   simp_all [subspace_down, subspace]
+  sorry
 
-theorem subspace_open_if {T: Family X} {A U: Set X} (hU: U ∈ T): subspace_down A U ∈ subspace T A := by
+theorem subspace_open_if {T: Family X} {A U: Set X} (hU: Open T U): subspace_down A U ∈ subspace T A := by
   simp [subspace, subspace_down]
   exists U
 

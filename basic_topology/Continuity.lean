@@ -10,6 +10,22 @@ set_option linter.style.multiGoal false
 
 variable {X Y Z: Type*}
 
+def Continuous (T₁: Family X) (T₂: Family Y) (f: X → Y): Prop :=
+  ∀ V, Open T₂ V → Open T₁ (f ⁻¹' V)
+
+def ContinuousAt (T₁: Family X) (T₂: Family Y) (f: X → Y) (x: X): Prop :=
+  ∀ V, f x ∈ V → Open T₂ V → x ∈ f⁻¹' V ∧ Open T₁ (f ⁻¹' V)
+
+theorem continuous_iff_continuous_all_points (T₁: Family X) (T₂: Family Y) (f: X → Y):
+  Continuous T₁ T₂ f ↔ ∀ x, ContinuousAt T₁ T₂ f x := by
+  constructor
+  intro h x V hV₁ hV₂
+  constructor
+  exact hV₁
+  exact h V hV₂
+  intro h V hV
+  sorry
+
 def continuous_at (T₁: Family X) (T₂: Family Y) (f: X → Y) (x: X): Prop :=
   ∀ N₂ ∈ Nbhds T₂ (f x), ∃ N₁ ∈ Nbhds T₁ x, f '' N₁ ⊆ N₂
 
@@ -34,9 +50,17 @@ theorem continuous.comp (T₁: Family X) (T₂: Family Y) (T₃: Family Z)
   obtain ⟨N₂, hN₂⟩ := hN₃
   sorry
 
+theorem Continuous.id (T: Family X): Continuous T T Function.id := by
+  exact fun _ h => h
 
+theorem Continuous.comp {T₁: Family X} {T₂: Family Y} {T₃: Family Z} {f: X → Y} {g: Y → Z} (hf: Continuous T₁ T₂ f) (hg: Continuous T₂ T₃ g):
+  Continuous T₁ T₃ (g ∘ f) := by
+  intro _ hW
+  rw [Set.preimage_comp]
+  apply hf
+  exact hg _ hW
 
-theorem continuous_iff_open_preimage_open (T₁: Family X) (T₂: Family Y) (f: X → Y)(hT₁: IsTopology T₁): continuous T₁ T₂ f ↔ ∀ V ∈ T₂, Set.preimage f V ∈ T₁ := by
+theorem continuous_iff_open_preimage_open (T₁: Family X) (T₂: Family Y) (f: X → Y) (hT₁: IsTopology T₁): continuous T₁ T₂ f ↔ ∀ V, Open T₂ V → Open T₁ (f ⁻¹' V) := by
   constructor
   intro h V hV
   simp[continuous,continuous_at,Nbhds] at h
@@ -74,8 +98,8 @@ theorem continuous_iff_open_preimage_open (T₁: Family X) (T₂: Family Y) (f: 
   refine Set.preimage_mono ?_
   exact hU.right.right
 
-def continuous_iff_closed_preimage_closed (T₁: Family X) (T₂: Family Y) (f: X → Y): continuous T₁ T₂ f ↔ ∀ F ∈ closedsets T₂, Set.preimage f F ∈ closedsets T₁ := by
+def continuous_iff_closed_preimage_closed (T₁: Family X) (T₂: Family Y) (f: X → Y): continuous T₁ T₂ f ↔ ∀ F, Closed T₂ F → Closed T₁ (f ⁻¹' F) := by
   sorry
 
-def continuous_iff_image_closure_subseteq_closure_image (T₁: Family X) (T₂: Family Y) (f: X → Y): continuous T₁ T₂ f ↔ ∀ A: Set X, Set.image f (closure T₁ A) ⊆ closure T₂ (Set.image f A) := by
+def continuous_iff_image_closure_subseteq_closure_image (T₁: Family X) (T₂: Family Y) (f: X → Y): continuous T₁ T₂ f ↔ ∀ A, f '' (closure T₁ A) ⊆ closure T₂ (f '' A) := by
   sorry

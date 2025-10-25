@@ -17,7 +17,7 @@ def cauchy [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X): Prop :=
 theorem convergent_cauchy [DistanceSpaceStruct D] {d: X → X → D} {x: Nat → X} (h: convergent_distance d x): cauchy d x := by
   sorry
 
-example [DistanceSpace D] {d: X → X → D} {x: Nat → X} {a: X} (h1: cauchy d x) (h2: adherent_value (metric_opensets d) x a): converges_distance d x a := by
+example [DistanceSpace D] {d: X → X → D} {x: Nat → X} {a: X} (h1: cauchy d x) (h2: adherent_value (metric_open d) x a): converges_distance d x a := by
   sorry
 
 def complete [DistanceSpaceStruct D] (d: X → X → D): Prop :=
@@ -25,10 +25,10 @@ def complete [DistanceSpaceStruct D] (d: X → X → D): Prop :=
 
 -- If A ⊆ X is complete then it is closed.
 -- todo: use subspace metric?
-example [DistanceSpaceStruct D] (d: X → X → D) (A: Set X) (h: complete (fun (a b: A) => d a b)): metric_closedset d A := by
+example [DistanceSpaceStruct D] (d: X → X → D) (A: Set X) (h: complete (fun (a b: A) => d a b)): metric_closed d A := by
   sorry
 
-example [DistanceSpaceStruct D] (d: X → X → D) (A: Set X) (h1: complete d) (h2: metric_closedset d A): complete (fun (a b: A) => d a b) := by
+example [DistanceSpaceStruct D] (d: X → X → D) (A: Set X) (h1: complete d) (h2: metric_closed d A): complete (fun (a b: A) => d a b) := by
   sorry
 
 -- If two metrics are uniformly equivalent, then Cauchy iff Cauchy.
@@ -38,7 +38,7 @@ example [DistanceSpaceStruct D] (d: X → X → D) (A: Set X) (h1: complete d) (
 
 structure Completion [DistanceSpace D] {X X': Type*} (d: X → X → D) (d': X' → X' → D) (i: X → X'): Prop where
   isometry: isometry d d' i
-  dense: dense (metric_opensets d') (Set.range i)
+  dense: dense (metric_open d') (Set.range i)
   complete: complete d'
 
 

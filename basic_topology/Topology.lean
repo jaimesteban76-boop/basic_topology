@@ -25,8 +25,8 @@ structure IsTopology (𝒯: Family X): Prop where
   finite_sInter: ∀ 𝒰 ⊆ 𝒯, Finite 𝒰 → ⋂₀ 𝒰 ∈ 𝒯
 
 structure Topology (X: Type u) where
-  opensets: Family X
-  is_topology: IsTopology opensets
+  Open: Family X
+  is_topology: IsTopology Open
 
 structure TopologicalSpace: Type (u + 1) where
   points: Type u
@@ -81,42 +81,34 @@ theorem binary_inter_open {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X}
 
 
 
-def openset (𝒯: Family X) (A: Set X): Prop :=
-  A ∈ 𝒯
-
-def closedset (𝒯: Family X) (A: Set X): Prop :=
-  openset 𝒯 Aᶜ
-
-def clopenset (𝒯: Family X) (A: Set X): Prop :=
-  openset 𝒯 A ∧ closedset 𝒯 A
-
--- pointless definition but sometimes feels right
-def opensets (𝒯: Family X): Family X :=
+def Open (𝒯: Family X): Family X :=
   𝒯
 
-def closedsets (𝒯: Family X): Family X :=
-  {A | closedset 𝒯 A}
+def Closed (𝒯: Family X): Family X :=
+  fun A => Open 𝒯 Aᶜ
 
-def clopensets (𝒯: Family X): Family X :=
-  opensets 𝒯 ∩ closedsets 𝒯
+def Clopen (𝒯: Family X): Family X :=
+  fun A => Open 𝒯 A ∧ Closed 𝒯 A
 
-theorem closedset_sInter {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ closedsets 𝒯, ⋂₀ 𝒰 ∈ closedsets 𝒯 := by
+
+
+theorem Closed_sInter {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ Closed 𝒯, ⋂₀ 𝒰 ∈ Closed 𝒯 := by
   sorry
 
-theorem closedset_finite_sUnion {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ closedsets 𝒯, Finite 𝒰 → ⋃₀ 𝒰 ∈ closedsets 𝒯 := by
+theorem Closed_finite_sUnion {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ Closed 𝒯, Finite 𝒰 → ⋃₀ 𝒰 ∈ Closed 𝒯 := by
   sorry
 
-theorem binary_union_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: closedset 𝒯 A) (hB: closedset 𝒯 B): closedset 𝒯 (A ∪ B) := by
-  rw [closedset, Set.compl_union]
+theorem binary_union_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: Closed 𝒯 A) (hB: Closed 𝒯 B): Closed 𝒯 (A ∪ B) := by
+  rw [Closed, Set.compl_union]
   exact binary_inter_open h𝒯 hA hB
 
-theorem binary_inter_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: closedset 𝒯 A) (hB: closedset 𝒯 B): closedset 𝒯 (A ∩ B) := by
-  rw [closedset, Set.compl_inter]
+theorem binary_inter_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: Closed 𝒯 A) (hB: Closed 𝒯 B): Closed 𝒯 (A ∩ B) := by
+  rw [Closed, Set.compl_inter]
   exact binary_union_open h𝒯 hA hB
 
 -- The union of a sequence of open sets is open
-theorem seq_inter_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, closedset 𝒯 (A n)): closedset 𝒯 (Set.iInter A) := by
-  exact closedset_sInter h𝒯 _ (Set.range_subset_iff.mpr h)
+theorem seq_inter_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, Closed 𝒯 (A n)): Closed 𝒯 (Set.iInter A) := by
+  exact Closed_sInter h𝒯 _ (Set.range_subset_iff.mpr h)
 
 -- the set of all subsets is a topology, aka the discrete topology
 theorem discrete_is_topology (X: Type*): IsTopology (@Set.univ (Set X)) := {
@@ -143,16 +135,16 @@ theorem indiscrete_is_topology (X: Type*): IsTopology {∅, @Set.univ X} := {
 
 
 -- the Sierpiński topology define on Bool with {true} open
-def sierpiński_opensets: Set (Set Bool) :=
+def SierpińskiOpen: Set (Set Bool) :=
  {{}, {true}, {false, true}}
 
 -- Helper lemma: in the sierpinski topology a set is open iff. it's subsingleton or the whole space.
-theorem sierpiński_open_iff (A: Set Bool): A ∈ sierpiński_opensets ↔ A ⊆ {true} ∨ A = Set.univ := by
+theorem SierpińskiOpen_iff (A: Set Bool): A ∈ SierpińskiOpen ↔ A ⊆ {true} ∨ A = Set.univ := by
   constructor
   · intro h
     rcases h with _ | _ | _
     repeat simp_all
-  · intro; simp [sierpiński_opensets]
+  · intro; simp [SierpińskiOpen]
     by_cases false ∈ A <;> by_cases true ∈ A
     repeat simp_all
     · right; left; ext x; match x with
@@ -163,20 +155,20 @@ theorem sierpiński_open_iff (A: Set Bool): A ∈ sierpiński_opensets ↔ A ⊆
       | true => simp_all
 
 -- this proof was very difficult despite being a space containig 2 points...
-theorem sierpiński_is_topology: IsTopology sierpiński_opensets := {
+theorem sierpiński_is_topology: IsTopology SierpińskiOpen := {
   sUnion := by
     intro 𝒰 h𝒰
     by_cases h: ∀ U ∈ 𝒰, U ⊆ {true} -- either all of them are subsingleton, or one of them is the universe
-    · apply (sierpiński_open_iff _).mpr
+    · apply (SierpińskiOpen_iff _).mpr
       exact Or.inl (Set.sUnion_subset h)
-    · apply (sierpiński_open_iff _).mpr
+    · apply (SierpińskiOpen_iff _).mpr
       apply Or.inr
       simp at h
       obtain ⟨U, hU⟩ := h
       apply Set.univ_subset_iff.mp
       apply Set.subset_sUnion_of_subset _ U
       · have: U = Set.univ := by
-          match (sierpiński_open_iff U).mp (h𝒰 hU.left) with
+          match (SierpińskiOpen_iff U).mp (h𝒰 hU.left) with
           | Or.inl _ => simp_all
           | Or.inr h => exact h
         rw [this]
@@ -184,17 +176,17 @@ theorem sierpiński_is_topology: IsTopology sierpiński_opensets := {
   finite_sInter := by
     intro 𝒰 h𝒰 _ -- either all of them are universes, or at least one is subsingleton
     by_cases h: ∀ U ∈ 𝒰, U = Set.univ
-    · apply (sierpiński_open_iff _).mpr
+    · apply (SierpińskiOpen_iff _).mpr
       exact Or.inr (Set.sInter_eq_univ.mpr h)
     · simp at h
       obtain ⟨U, hU⟩ := h
-      have: U ⊆ {true} := by have := ((sierpiński_open_iff U).mp (h𝒰 hU.left)); simp_all
+      have: U ⊆ {true} := by have := ((SierpińskiOpen_iff U).mp (h𝒰 hU.left)); simp_all
       have: ⋂₀ 𝒰 ⊆ {true} := by simp; exists U; simp_all
-      apply (sierpiński_open_iff _).mpr
+      apply (SierpińskiOpen_iff _).mpr
       exact Or.inl this
 }
 
 def sierpiński_topology: Topology Bool := {
-  opensets := sierpiński_opensets
+  Open := SierpińskiOpen
   is_topology := sierpiński_is_topology
 }
