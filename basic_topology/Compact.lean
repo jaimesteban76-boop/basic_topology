@@ -1,16 +1,16 @@
 import basic_topology.Subspace
 import basic_topology.Sequence
 
-variable {X: Type*}
+variable {X: Type*} {T: Family X}
 
 -- define compact space and sset
-def compact (T: Set (Set X)): Prop :=
+def compact (T: Family X): Prop :=
   ∀ C ⊆ T, ⋃₀ C = ⊤ → ∃ C₀, C₀ ⊆ C ∧ Finite C₀ ∧ ⋃₀ C₀ = ⊤
 
-def compactset (T: Set (Set X)) (A: Set X): Prop :=
+def compactset (T: Family X) (A: Set X): Prop :=
   ∀ C ⊆ T, A ⊆ ⋃₀ C → ∃ C₀, C₀ ⊆ C ∧ Finite C₀ ∧ A ⊆ ⋃₀ C₀
 
-theorem compactset_iff_compact_subspace (T: Set (Set X)) (A: Set X) :
+theorem compactset_iff_compact_subspace (T: Family X) (A: Set X) :
   compactset T A ↔ compact (subspace T A) := by
   constructor
   · intro h C h1 h2
@@ -28,5 +28,5 @@ theorem compactset_iff_compact_subspace (T: Set (Set X)) (A: Set X) :
     · sorry
     · sorry
 
-theorem compact_closed_subset {T: Set (Set X)} (hT: hausdorff T) {K: Set X} (hK: compactset T K): closedset T K := by
+theorem compact_closed_subset (hT: hausdorff T) {K: Set X} (hK: compactset T K): closedset T K := by
   sorry

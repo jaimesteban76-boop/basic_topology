@@ -2,7 +2,7 @@ import basic_topology.Homeomorphism
 
 variable {X Y: Type*}
 
-def connected (T: Set (Set X)): Prop :=
+def connected (T: Family X): Prop :=
   ∀ U V: Set X, U ∈ T → V ∈ T → U.Nonempty → V.Nonempty → U ∪ V = Set.univ → (U ∩ V).Nonempty
 
 def connected_space (X: TopologicalSpace): Prop :=

@@ -76,7 +76,7 @@ theorem closedball_closed [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) 
   -- · exact closedball_compl_mem hd hx0
 
 -- the set of open balls in a metric space
-def openballs [DistanceSpaceStruct D] (d: X → X → D): Set (Set X) :=
+def openballs [DistanceSpaceStruct D] (d: X → X → D): Family X :=
   ⋃ (x: X), ⋃ (r: D), {openball d x r}
 
 theorem open_iff_sUnion_of_balls [DistanceSpace D] (d: X → X → D) (hd: IsMetric d) (A: Set X): metric_openset d A ↔ ∃ 𝒰 ⊆ openballs d, A = ⋃₀ 𝒰 := by
@@ -115,7 +115,7 @@ theorem open_iff_sUnion_of_balls [DistanceSpace D] (d: X → X → D) (hd: IsMet
     --     _ ⊆ ⋃₀ 𝒰          := Set.subset_sUnion_of_subset 𝒰 U (fun ⦃a⦄ a ↦ a) hU1
 
 -- the set of all open sets in a metric space
-def metric_opensets [DistanceSpace D] (d: X → X → D): Set (Set X) :=
+def metric_opensets [DistanceSpace D] (d: X → X → D): Family X :=
  {A | metric_openset d A}
 
 theorem openballs_sub_opensets [DistanceSpace D] {d: X → X → D} (hd: IsMetric d): openballs d ⊆ metric_opensets d := by
@@ -135,7 +135,7 @@ theorem discrete_opensets (X D: Type*) [CompleteDistanceSpace D] [Nontrivial D] 
   · sorry -- simp [discrete_openball_singleton x bot_lt_top]
 
 -- in a metric space, arbitrary unions of open sets are open (doesnt actually depend on d being a metric)
-theorem metric_open_sUnion [DistanceSpace D] {d: X → X → D} {C: Set (Set X)} (h: C ⊆ metric_opensets d): ⋃₀ C ∈ metric_opensets d := by
+theorem metric_open_sUnion [DistanceSpace D] {d: X → X → D} {C: Family X} (h: C ⊆ metric_opensets d): ⋃₀ C ∈ metric_opensets d := by
   intro z ⟨U, hU1, hU2⟩
   obtain ⟨r, hr1, hr2⟩ := h hU1 z hU2
   exists r
@@ -144,7 +144,7 @@ theorem metric_open_sUnion [DistanceSpace D] {d: X → X → D} {C: Set (Set X)}
   · exact Set.subset_sUnion_of_subset C U hr2 hU1
 
 -- in a metric space, finite intersections of open sets are open
-theorem metric_open_finite_sInter [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) {C: Set (Set X)} (h1: C ⊆ metric_opensets d) (h2: Finite C): ⋂₀ C ∈ metric_opensets d := by
+theorem metric_open_finite_sInter [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) {C: Family X} (h1: C ⊆ metric_opensets d) (h2: Finite C): ⋂₀ C ∈ metric_opensets d := by
   intro z hz
   simp at hz
 

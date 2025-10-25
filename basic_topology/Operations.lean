@@ -3,34 +3,34 @@ import basic_topology.Neighborhood
 
 variable {X Y: Type*}
 
-def interior_point (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
+def interior_point (𝒯: Family X) (A: Set X) (x: X): Prop :=
   neighborhood 𝒯 A x
 
-def interior (𝒯: Set (Set X)) (A: Set X): Set X :=
+def interior (𝒯: Family X) (A: Set X): Set X :=
  {x | interior_point 𝒯 A x}
 
 -- Interior is monotone: if A ⊆ B then interior(A) ⊆ interior(B)
-theorem interior_monotone (𝒯: Set (Set X)) {A B: Set X} (h: A ⊆ B): interior 𝒯 A ⊆ interior 𝒯 B := by
+theorem interior_monotone (𝒯: Family X) {A B: Set X} (h: A ⊆ B): interior 𝒯 A ⊆ interior 𝒯 B := by
   simp [interior, interior_point]
   intro x hx
   exact neighborhood_upward_closed x hx h
 
 -- Interior of the empty set is empty
-theorem interior_empty (𝒯: Set (Set X)): interior 𝒯 ∅ = ∅ := by
+theorem interior_empty (𝒯: Family X): interior 𝒯 ∅ = ∅ := by
   simp [interior, neighborhood, interior_point]
 
 -- Interior of the universe is itself
-theorem interior_univ {𝒯: Set (Set X)} (h: IsTopology 𝒯): interior 𝒯 Set.univ = Set.univ := by
+theorem interior_univ {𝒯: Family X} (h: IsTopology 𝒯): interior 𝒯 Set.univ = Set.univ := by
   apply Set.eq_univ_of_univ_subset
   intro _ _
   apply neighborhood_univ h
 
 -- Interior is a subset of the original set
-theorem interior_subset_self (𝒯: Set (Set X)) (A: Set X): interior 𝒯 A ⊆ A := by
+theorem interior_subset_self (𝒯: Family X) (A: Set X): interior 𝒯 A ⊆ A := by
   exact fun _ => neighborhood_mem
 
 -- Interior is idempotent: interior(interior(A)) = interior(A)
-theorem interior_idempotent (𝒯: Set (Set X)) (A: Set X): interior 𝒯 (interior 𝒯 A) = interior 𝒯 A := by
+theorem interior_idempotent (𝒯: Family X) (A: Set X): interior 𝒯 (interior 𝒯 A) = interior 𝒯 A := by
   apply le_antisymm
   · apply interior_subset_self
   · intro _ hx
@@ -42,7 +42,7 @@ theorem interior_idempotent (𝒯: Set (Set X)) (A: Set X): interior 𝒯 (inter
     exists U
 
 -- The interior is open
-theorem interior_open {𝒯: Set (Set X)} (h: IsTopology 𝒯) (A: Set X): interior 𝒯 A ∈ 𝒯 := by
+theorem interior_open {𝒯: Family X} (h: IsTopology 𝒯) (A: Set X): interior 𝒯 A ∈ 𝒯 := by
   apply (open_iff_neighborhood_of_all_points h (interior 𝒯 A)).mpr
   intro _ hx
   obtain ⟨U, hU₁, hU₂, _⟩ := hx
@@ -54,7 +54,7 @@ theorem interior_open {𝒯: Set (Set X)} (h: IsTopology 𝒯) (A: Set X): inter
     exists U
 
 -- The interior of A is largest open subset of A
-theorem interior_largest_open_subset {𝒯: Set (Set X)} {A U: Set X} (h1: U ∈ 𝒯) (h2: U ⊆ A): U ⊆ interior 𝒯 A := by
+theorem interior_largest_open_subset {𝒯: Family X} {A U: Set X} (h1: U ∈ 𝒯) (h2: U ⊆ A): U ⊆ interior 𝒯 A := by
   rw [interior]
   intro y hy
   apply Set.mem_setOf.mpr
@@ -64,7 +64,7 @@ theorem interior_largest_open_subset {𝒯: Set (Set X)} {A U: Set X} (h1: U ∈
 
 -- The interior of A is the union of all open subsets of A.
 -- (Is this proof beautiful or ugly?)
-theorem interior_eq_union_open_subsets {𝒯: Set (Set X)} {A: Set X}: interior 𝒯 A = ⋃₀ {U ∈ 𝒯 | U ⊆ A} := by
+theorem interior_eq_union_open_subsets {𝒯: Family X} {A: Set X}: interior 𝒯 A = ⋃₀ {U ∈ 𝒯 | U ⊆ A} := by
   ext
   constructor
   · intro ⟨U, _, _, _⟩
@@ -73,7 +73,7 @@ theorem interior_eq_union_open_subsets {𝒯: Set (Set X)} {A: Set X}: interior 
     exists U
 
 -- A set is open iff. it is its own interior
-theorem open_iff_eq_interior {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ A = interior 𝒯 A := by
+theorem open_iff_eq_interior {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ A = interior 𝒯 A := by
   constructor
   · intro h
     apply Set.Subset.antisymm_iff.mpr
@@ -84,7 +84,7 @@ theorem open_iff_eq_interior {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Se
     rw [h]
     apply interior_open h𝒯
 
-theorem interior_iff_basis_element {ℬ 𝒯: Set (Set X)} (Bbase: base 𝒯 ℬ )(A: Set X)(x: X): x∈ interior 𝒯 A ↔ ∃ B∈ ℬ, x∈ B ∧ B⊆ A := by
+theorem interior_iff_basis_element {ℬ 𝒯: Family X} (Bbase: base 𝒯 ℬ )(A: Set X)(x: X): x∈ interior 𝒯 A ↔ ∃ B∈ ℬ, x∈ B ∧ B⊆ A := by
   rw[base] at Bbase
   constructor
   · rw [interior]
@@ -119,7 +119,7 @@ theorem interior_iff_basis_element {ℬ 𝒯: Set (Set X)} (Bbase: base 𝒯 ℬ
       · simp_all only
 
 -- interior (A ∩ B) = interior A ∩ interior B
-theorem interior_inter_eq {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A B: Set X): interior 𝒯 (A ∩ B) = interior 𝒯 A ∩ interior 𝒯 B := by
+theorem interior_inter_eq {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A B: Set X): interior 𝒯 (A ∩ B) = interior 𝒯 A ∩ interior 𝒯 B := by
   ext
   constructor
   · intro hx
@@ -143,16 +143,16 @@ theorem discrete_interior (A: Set X): interior Set.univ A = A := by
   · intro
     apply (discrete_neighborhood_iff _ _).mpr
 
-def adherent (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
+def adherent (𝒯: Family X) (A: Set X) (x: X): Prop :=
   ∀ N ∈ Nbhds 𝒯 x, Set.Nonempty (N ∩ A)
 
-def closure (𝒯: Set (Set X)) (A: Set X): Set X :=
+def closure (𝒯: Family X) (A: Set X): Set X :=
  {x | adherent 𝒯 A x}
 
 -- Duality: closure(A) = interior(Aᶜ)ᶜ
 -- Lets us prove results about closure in terms of interior
 -- TODO: this proof is ugly!
-theorem closure_eq (𝒯: Set (Set X)) (A: Set X): closure 𝒯 A = (interior 𝒯 Aᶜ)ᶜ := by
+theorem closure_eq (𝒯: Family X) (A: Set X): closure 𝒯 A = (interior 𝒯 Aᶜ)ᶜ := by
   ext x
   constructor
   · intro hx
@@ -177,19 +177,19 @@ theorem closure_eq (𝒯: Set (Set X)) (A: Set X): closure 𝒯 A = (interior �
     · exact hU₃ hx1
     · exact Set.not_notMem.mp hx2
 
-theorem closure_empty {𝒯: Set (Set X)} (h: IsTopology 𝒯): closure 𝒯 ∅ = ∅ := by
+theorem closure_empty {𝒯: Family X} (h: IsTopology 𝒯): closure 𝒯 ∅ = ∅ := by
   simp [closure_eq, interior_univ h]
 
-theorem closure_univ (𝒯: Set (Set X)): closure 𝒯 Set.univ = Set.univ := by
+theorem closure_univ (𝒯: Family X): closure 𝒯 Set.univ = Set.univ := by
   simp [closure_eq, interior_empty]
 
-theorem closure_compl_eq_compl_interior (𝒯: Set (Set X)) (A: Set X): closure 𝒯 Aᶜ = (interior 𝒯 A)ᶜ := by
+theorem closure_compl_eq_compl_interior (𝒯: Family X) (A: Set X): closure 𝒯 Aᶜ = (interior 𝒯 A)ᶜ := by
   simp [closure_eq]
 
-theorem compl_closure_eq_interior_compl (𝒯: Set (Set X)) (A: Set X): (closure 𝒯 A)ᶜ = interior 𝒯 Aᶜ := by
+theorem compl_closure_eq_interior_compl (𝒯: Family X) (A: Set X): (closure 𝒯 A)ᶜ = interior 𝒯 Aᶜ := by
   simp [closure_eq]
 
-theorem closure_monotone (𝒯: Set (Set X)) (A B: Set X){h :A⊆ B}: closure 𝒯 A ⊆ closure 𝒯 B := by
+theorem closure_monotone (𝒯: Family X) (A B: Set X){h :A⊆ B}: closure 𝒯 A ⊆ closure 𝒯 B := by
 simp[closure, adherent]
 intro x hx
 intro U hU
@@ -198,39 +198,39 @@ have h1: U ∩ A ⊆ U ∩ B := by
   exact Set.inter_subset_inter (fun ⦃a⦄ a ↦ a) h
 exact Set.Nonempty.mono h1 hU
 
-theorem closure_interior (𝒯: Set (Set X)) (A: Set X): closure 𝒯 (interior 𝒯 A) ⊆ closure 𝒯 A := by
+theorem closure_interior (𝒯: Family X) (A: Set X): closure 𝒯 (interior 𝒯 A) ⊆ closure 𝒯 A := by
   apply closure_monotone
   apply interior_subset_self
 
-theorem closure_idempotent (𝒯: Set (Set X)) (A: Set X): closure 𝒯 (closure 𝒯 A) = closure 𝒯 A := by
+theorem closure_idempotent (𝒯: Family X) (A: Set X): closure 𝒯 (closure 𝒯 A) = closure 𝒯 A := by
   simp [closure_eq, interior_idempotent]
 
 -- the closure is closed
-theorem closure_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): closedset 𝒯 (closure 𝒯 A) := by
+theorem closure_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A: Set X): closedset 𝒯 (closure 𝒯 A) := by
   simp [closure_eq, closedset]
   apply interior_open h𝒯
 
 -- closure is a superset of the original
-theorem closure_supset_self (𝒯: Set (Set X)) (A: Set X): A ⊆ closure 𝒯 A := by
+theorem closure_supset_self (𝒯: Family X) (A: Set X): A ⊆ closure 𝒯 A := by
   simp [closure_eq]
   apply Set.subset_compl_comm.mpr
   apply interior_subset_self
 
 -- The closure of A is smallest closed supset of A
-theorem closure_smallest_closed_supset {𝒯: Set (Set X)} {A U: Set X} (h1: Uᶜ ∈ 𝒯) (h2: A ⊆ U): closure 𝒯 A ⊆ U := by
+theorem closure_smallest_closed_supset {𝒯: Family X} {A U: Set X} (h1: Uᶜ ∈ 𝒯) (h2: A ⊆ U): closure 𝒯 A ⊆ U := by
   simp [closure_eq]
   have: Uᶜ ⊆ Aᶜ := Set.compl_subset_compl_of_subset h2
   have := interior_largest_open_subset h1 this
   exact Set.compl_subset_comm.mp this
 
-theorem closure_eq_inter_closed_supsets {𝒯: Set (Set X)} {A: Set X}: closure 𝒯 A = ⋂₀ {U | Uᶜ ∈ 𝒯 ∧ A ⊆ U} := by
+theorem closure_eq_inter_closed_supsets {𝒯: Family X} {A: Set X}: closure 𝒯 A = ⋂₀ {U | Uᶜ ∈ 𝒯 ∧ A ⊆ U} := by
   simp [closure_eq]
   apply compl_inj_iff.mp
   simp
   rw [interior_eq_union_open_subsets]
   sorry
 
-theorem closed_iff_eq_closure {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: Set X): closedset 𝒯 A ↔ A = closure 𝒯 A := by
+theorem closed_iff_eq_closure {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A: Set X): closedset 𝒯 A ↔ A = closure 𝒯 A := by
   simp [closure_eq, closedset]
   calc
     Aᶜ ∈ 𝒯 ↔ Aᶜ  = interior 𝒯 Aᶜ      := by apply open_iff_eq_interior h𝒯
@@ -238,7 +238,7 @@ theorem closed_iff_eq_closure {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A: S
          _ ↔ A   = (interior 𝒯 Aᶜ)ᶜ   := by rw [compl_compl]
 
 -- closure (A ∪ B) = (closure A) ∪ (closure B)
-theorem closure_union_eq {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) (A B: Set X): closure 𝒯 (A ∪ B) = closure 𝒯 A ∪ closure 𝒯 B := by
+theorem closure_union_eq {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A B: Set X): closure 𝒯 (A ∪ B) = closure 𝒯 A ∪ closure 𝒯 B := by
   simp [closure_eq]
   apply compl_inj_iff.mp
   simp
@@ -249,19 +249,19 @@ theorem discrete_closure (A: Set X): closure Set.univ A = A := by
   simp [closure_eq, discrete_interior]
 
 -- the frontier, aka boundary
-def frontier_point (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
+def frontier_point (𝒯: Family X) (A: Set X) (x: X): Prop :=
   ∀ N ∈ Nbhds 𝒯 x, Set.Nonempty (N ∩ A) ∧ Set.Nonempty (N ∩ Aᶜ)
 
-def frontier (𝒯: Set (Set X)) (A: Set X): Set X :=
+def frontier (𝒯: Family X) (A: Set X): Set X :=
   {x | frontier_point 𝒯 A x}
 
-theorem frontier_eq (𝒯: Set (Set X)) (A: Set X): frontier 𝒯 A = closure 𝒯 A ∩ closure 𝒯 Aᶜ := by
+theorem frontier_eq (𝒯: Family X) (A: Set X): frontier 𝒯 A = closure 𝒯 A ∩ closure 𝒯 Aᶜ := by
   simp [frontier, frontier_point, closure, adherent]
   ext
   exact forall₂_and
 
 -- the frontier of the closure is the same as the frontier
-theorem frontier_closure_eq (𝒯: Set (Set X)) (A: Set X): frontier 𝒯 (closure 𝒯 A) = frontier 𝒯 A := by
+theorem frontier_closure_eq (𝒯: Family X) (A: Set X): frontier 𝒯 (closure 𝒯 A) = frontier 𝒯 A := by
   calc
     frontier 𝒯 (closure 𝒯 A) = closure 𝒯 (closure 𝒯 A) ∩ closure 𝒯 (closure 𝒯 A)ᶜ := by rw [frontier_eq]
                            _ = closure 𝒯 A ∩ closure 𝒯 (closure 𝒯 A)ᶜ := by rw [closure_idempotent]
@@ -269,35 +269,35 @@ theorem frontier_closure_eq (𝒯: Set (Set X)) (A: Set X): frontier 𝒯 (closu
                            _ = closure 𝒯 A ∩ closure 𝒯 Aᶜ := sorry
                            _ = frontier 𝒯 A := by rw [frontier_eq]
 
-theorem frontier_closed (𝒯: Set (Set X)) (A: Set X): closedset 𝒯 (frontier 𝒯 A) := by
+theorem frontier_closed (𝒯: Family X) (A: Set X): closedset 𝒯 (frontier 𝒯 A) := by
   sorry
 
 -- TODO: is basic neighborhood worth defining?
-theorem frontier_mem_iff {𝒯 ℬ: Set (Set X)} (h: base 𝒯 ℬ) (A: Set X) (x: X): x ∈ frontier 𝒯 A ↔ ∀ N ∈ Nbhds 𝒯 x ∩ ℬ, N ∩ A = ∅ ∧ N ∩ Aᶜ = ∅ := by
+theorem frontier_mem_iff {𝒯 ℬ: Family X} (h: base 𝒯 ℬ) (A: Set X) (x: X): x ∈ frontier 𝒯 A ↔ ∀ N ∈ Nbhds 𝒯 x ∩ ℬ, N ∩ A = ∅ ∧ N ∩ Aᶜ = ∅ := by
   sorry
 
-theorem frontier_univ {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): frontier 𝒯 Set.univ = ∅ := by
+theorem frontier_univ {𝒯: Family X} (h𝒯: IsTopology 𝒯): frontier 𝒯 Set.univ = ∅ := by
   simp [frontier_eq, closure_empty h𝒯]
 
-theorem frontier_empty {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): frontier 𝒯 ∅ = ∅ := by
+theorem frontier_empty {𝒯: Family X} (h𝒯: IsTopology 𝒯): frontier 𝒯 ∅ = ∅ := by
   simp [frontier_eq, closure_empty h𝒯]
 
 -- in the discrete topology, the frontier of every set is empty
 theorem discrete_frontier (A: Set X): frontier Set.univ A = ∅ := by
   simp [frontier_eq, discrete_closure]
 
-def exterior_point (𝒯: Set (Set X)) (A: Set X) (x: X): Prop :=
+def exterior_point (𝒯: Family X) (A: Set X) (x: X): Prop :=
   x ∈ interior 𝒯 Aᶜ
 
-def exterior (𝒯: Set (Set X)) (A: Set X): Set X :=
+def exterior (𝒯: Family X) (A: Set X): Set X :=
   {x | exterior_point 𝒯 A x}
 
-theorem exterior_eq (𝒯: Set (Set X)) (A: Set X): exterior 𝒯 A = (closure 𝒯 A)ᶜ := by
+theorem exterior_eq (𝒯: Family X) (A: Set X): exterior 𝒯 A = (closure 𝒯 A)ᶜ := by
   simp [exterior, exterior_point, compl_closure_eq_interior_compl]
 
 -- TODO this is clunky
 -- the interior, frontier, and exterior form a disjoint union of the whole space.
-theorem interior_frontier_exterior_partition (𝒯: Set (Set X)) (A: Set X) :
+theorem interior_frontier_exterior_partition (𝒯: Family X) (A: Set X) :
   (interior 𝒯 A ∪ frontier 𝒯 A ∪ exterior 𝒯 A = X) ∧ (interior 𝒯 A ∩ frontier 𝒯 A = ∅) ∧ (interior 𝒯 A ∩ exterior 𝒯 A = ∅) ∧ (frontier 𝒯 A ∩ exterior 𝒯 A = ∅) := by
   repeat' constructor
   · sorry
@@ -309,8 +309,8 @@ theorem interior_frontier_exterior_partition (𝒯: Set (Set X)) (A: Set X) :
 theorem discrete_exterior (A: Set X): exterior Set.univ A = Aᶜ := by
   simp [exterior_eq, closure_eq, discrete_interior]
 
-theorem closure_eq_interior_union_frontier (𝒯: Set (Set X)) (A: Set X): closure 𝒯 A = interior 𝒯 A ∪ frontier 𝒯 A := by
+theorem closure_eq_interior_union_frontier (𝒯: Family X) (A: Set X): closure 𝒯 A = interior 𝒯 A ∪ frontier 𝒯 A := by
   sorry
 
-theorem interior_eq_set_minus_frontier (𝒯: Set (Set X)) (A: Set X): interior 𝒯 A = A \ frontier 𝒯 A := by
+theorem interior_eq_set_minus_frontier (𝒯: Family X) (A: Set X): interior 𝒯 A = A \ frontier 𝒯 A := by
   sorry

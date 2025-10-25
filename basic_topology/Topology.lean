@@ -17,38 +17,41 @@ For simplicity I guess we will work with `IsTopology` mostly.
 
 -/
 
-structure IsTopology (𝒯: Set (Set X)): Prop where
+abbrev Family (X: Type u): Type u :=
+  Set (Set X)
+
+structure IsTopology (𝒯: Family X): Prop where
   sUnion: ∀ 𝒰 ⊆ 𝒯, ⋃₀ 𝒰 ∈ 𝒯
   finite_sInter: ∀ 𝒰 ⊆ 𝒯, Finite 𝒰 → ⋂₀ 𝒰 ∈ 𝒯
 
 structure Topology (X: Type u) where
-  opensets: Set (Set X)
+  opensets: Family X
   is_topology: IsTopology opensets
 
 structure TopologicalSpace: Type (u + 1) where
   points: Type u
   topology: Topology points
 
-theorem empty_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): ∅ ∈ 𝒯 := by
+theorem empty_open {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∅ ∈ 𝒯 := by
   have: (∅: Set X) = ⋃₀ ∅ := by ext; simp
   rw [this]
   apply h𝒯.sUnion
   exact Set.empty_subset 𝒯
 
 -- Binary unions and intersections of open sets are open
-theorem binary_union_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∪ B ∈ 𝒯 := by
+theorem binary_union_open {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∪ B ∈ 𝒯 := by
   have: A ∪ B = ⋃₀ {A, B} := by ext; simp
   rw [this]
   apply h𝒯.sUnion
   exact Set.pair_subset hA hB
 
 -- The union of a sequence of open sets is open
-theorem seq_union_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, A n ∈ 𝒯): Set.iUnion A ∈ 𝒯 := by
+theorem seq_union_open {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, A n ∈ 𝒯): Set.iUnion A ∈ 𝒯 := by
   apply h𝒯.sUnion
   exact Set.range_subset_iff.mpr h
 
 -- theorem: finite intersection property is equivalent to binary intersections plus whole set
- theorem finite_inter_iff {T: Set (Set X)}: (∀ U ⊆ T, U.Finite → ⋂₀ U ∈ T) ↔ Set.univ ∈ T ∧ ∀ A ∈ T, ∀ B ∈ T, A ∩ B ∈ T := by
+ theorem finite_inter_iff {T: Family X}: (∀ U ⊆ T, U.Finite → ⋂₀ U ∈ T) ↔ Set.univ ∈ T ∧ ∀ A ∈ T, ∀ B ∈ T, A ∩ B ∈ T := by
   constructor
   · intro h
     constructor
@@ -70,49 +73,49 @@ theorem seq_union_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A: ℕ → 
     · exact hU1 hS
     · exact ih
 
-theorem univ_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): Set.univ ∈ 𝒯 := by
+theorem univ_open {𝒯: Family X} (h𝒯: IsTopology 𝒯): Set.univ ∈ 𝒯 := by
   exact (finite_inter_iff.mp h𝒯.finite_sInter).left
 
-theorem binary_inter_open {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∩ B ∈ 𝒯 := by
+theorem binary_inter_open {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∩ B ∈ 𝒯 := by
   exact (finite_inter_iff.mp h𝒯.finite_sInter).right _ hA _ hB
 
 
 
-def openset (𝒯: Set (Set X)) (A: Set X): Prop :=
+def openset (𝒯: Family X) (A: Set X): Prop :=
   A ∈ 𝒯
 
-def closedset (𝒯: Set (Set X)) (A: Set X): Prop :=
+def closedset (𝒯: Family X) (A: Set X): Prop :=
   openset 𝒯 Aᶜ
 
-def clopenset (𝒯: Set (Set X)) (A: Set X): Prop :=
+def clopenset (𝒯: Family X) (A: Set X): Prop :=
   openset 𝒯 A ∧ closedset 𝒯 A
 
 -- pointless definition but sometimes feels right
-def opensets (𝒯: Set (Set X)): Set (Set X) :=
+def opensets (𝒯: Family X): Family X :=
   𝒯
 
-def closedsets (𝒯: Set (Set X)): Set (Set X) :=
+def closedsets (𝒯: Family X): Family X :=
   {A | closedset 𝒯 A}
 
-def clopensets (𝒯: Set (Set X)): Set (Set X) :=
+def clopensets (𝒯: Family X): Family X :=
   opensets 𝒯 ∩ closedsets 𝒯
 
-theorem closedset_sInter {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ closedsets 𝒯, ⋂₀ 𝒰 ∈ closedsets 𝒯 := by
+theorem closedset_sInter {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ closedsets 𝒯, ⋂₀ 𝒰 ∈ closedsets 𝒯 := by
   sorry
 
-theorem closedset_finite_sUnion {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ closedsets 𝒯, Finite 𝒰 → ⋃₀ 𝒰 ∈ closedsets 𝒯 := by
+theorem closedset_finite_sUnion {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ closedsets 𝒯, Finite 𝒰 → ⋃₀ 𝒰 ∈ closedsets 𝒯 := by
   sorry
 
-theorem binary_union_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: closedset 𝒯 A) (hB: closedset 𝒯 B): closedset 𝒯 (A ∪ B) := by
+theorem binary_union_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: closedset 𝒯 A) (hB: closedset 𝒯 B): closedset 𝒯 (A ∪ B) := by
   rw [closedset, Set.compl_union]
   exact binary_inter_open h𝒯 hA hB
 
-theorem binary_inter_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: closedset 𝒯 A) (hB: closedset 𝒯 B): closedset 𝒯 (A ∩ B) := by
+theorem binary_inter_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: closedset 𝒯 A) (hB: closedset 𝒯 B): closedset 𝒯 (A ∩ B) := by
   rw [closedset, Set.compl_inter]
   exact binary_union_open h𝒯 hA hB
 
 -- The union of a sequence of open sets is open
-theorem seq_inter_closed {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, closedset 𝒯 (A n)): closedset 𝒯 (Set.iInter A) := by
+theorem seq_inter_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, closedset 𝒯 (A n)): closedset 𝒯 (Set.iInter A) := by
   exact closedset_sInter h𝒯 _ (Set.range_subset_iff.mpr h)
 
 -- the set of all subsets is a topology, aka the discrete topology

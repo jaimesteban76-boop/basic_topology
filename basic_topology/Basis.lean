@@ -3,11 +3,11 @@ import basic_topology.Topology
 variable {X: Type*}
 
 -- Definition: ℬ is a base for 𝒯 if every open set of 𝒯 is a union of sets from ℬ
-def base (𝒯 ℬ: Set (Set X)): Prop :=
+def base (𝒯 ℬ: Family X): Prop :=
   ℬ ⊆ 𝒯 ∧ ∀ U ∈ 𝒯, ∃ 𝒰 ⊆ ℬ, U = ⋃₀ 𝒰
 
 -- Every topology is a base for itself.
-theorem base_self (𝒯: Set (Set X)): base 𝒯 𝒯 := by
+theorem base_self (𝒯: Family X): base 𝒯 𝒯 := by
 constructor
 · rfl
 · intro U hU
@@ -17,7 +17,7 @@ constructor
   · ext; simp
 
 -- ℬ is a base for 𝒯 iff. ∀ U ∈ 𝒯, ∀ x ∈ U, ∃ B ∈ ℬ, x ∈ B ⊆ U. Does not require 𝒯 to be a topology.
-theorem base_iff (𝒯 ℬ: Set (Set X)): base 𝒯 ℬ ↔ ℬ ⊆ 𝒯 ∧ ∀ U ∈ 𝒯, ∀ x ∈ U, ∃ B ∈ ℬ, x ∈ B ∧ B ⊆ U := by
+theorem base_iff (𝒯 ℬ: Family X): base 𝒯 ℬ ↔ ℬ ⊆ 𝒯 ∧ ∀ U ∈ 𝒯, ∀ x ∈ U, ∃ B ∈ ℬ, x ∈ B ∧ B ⊆ U := by
   constructor
   · intro h
     constructor
@@ -102,37 +102,37 @@ theorem sierpiński_base: base (sierpiński_opensets) {{true}, {false, true}} :=
           | inr => simp_all
 
 -- We say ℬ "is a base" if there exists a topology for which it is a base.
-def is_base (ℬ: Set (Set X)): Prop :=
+def is_base (ℬ: Family X): Prop :=
   ∃ 𝒯, IsTopology 𝒯 ∧ base 𝒯 ℬ
 
 -- If 𝒯 is a topology then 𝒯 is a base... for itself.
-theorem topology_is_base {𝒯: Set (Set X)} (h: IsTopology 𝒯): is_base 𝒯 := by
+theorem topology_is_base {𝒯: Family X} (h: IsTopology 𝒯): is_base 𝒯 := by
   exists 𝒯
   exact ⟨h, base_self 𝒯⟩
 
 -- If ℬ is a base for a topology 𝒯 is a topology then ℬ is a base... for 𝒯.
-theorem base_is_base {𝒯 ℬ: Set (Set X)} (h1: IsTopology 𝒯) (h2: base 𝒯 ℬ): is_base ℬ := by
+theorem base_is_base {𝒯 ℬ: Family X} (h1: IsTopology 𝒯) (h2: base 𝒯 ℬ): is_base ℬ := by
   exists 𝒯
 
 -- Given an arbitrary collection ℬ, `unions ℬ` is the set of unions obtained of sets from ℬ.
-def unions (ℬ: Set (Set X)): Set (Set X) :=
+def unions (ℬ: Family X): Family X :=
   ⋃ 𝒰 ⊆ ℬ, {⋃₀ 𝒰}
 
 -- some simple theorems about `unions`
-theorem unions_mem (ℬ: Set (Set X)) {U: Set X} (hU: U ∈ ℬ): U ∈ unions ℬ := by
+theorem unions_mem (ℬ: Family X) {U: Set X} (hU: U ∈ ℬ): U ∈ unions ℬ := by
   simp [unions]
   exists {U}
   constructor
   · exact Set.singleton_subset_iff.mpr hU
   · exact Eq.symm (Set.sUnion_singleton _)
 
-theorem unions_sub (ℬ: Set (Set X)): ℬ ⊆ unions ℬ := by
+theorem unions_sub (ℬ: Family X): ℬ ⊆ unions ℬ := by
   intro U _
   simp [unions]
   exists {U}
   simp_all
 
-theorem unions_mono {ℬ ℬ': Set (Set X)} (h: ℬ ⊆ ℬ'): unions ℬ ⊆ unions ℬ' := by
+theorem unions_mono {ℬ ℬ': Family X} (h: ℬ ⊆ ℬ'): unions ℬ ⊆ unions ℬ' := by
   simp_all [unions]
   intro B hB
   exists B
@@ -143,7 +143,7 @@ theorem unions_mono {ℬ ℬ': Set (Set X)} (h: ℬ ⊆ ℬ'): unions ℬ ⊆ un
 -- the unions operator is idempotent
 -- forward direction is obvious
 -- for the reverse, the idea is if U = ⋃ i, V i and each V i = ⋃ j, B i j then U = ⋃ i j, B i j
-theorem unions_idem {ℬ: Set (Set X)}: unions ℬ = unions (unions ℬ) := by
+theorem unions_idem {ℬ: Family X}: unions ℬ = unions (unions ℬ) := by
   apply le_antisymm
   · apply unions_sub
   · intro U hU
@@ -154,7 +154,7 @@ theorem unions_idem {ℬ: Set (Set X)}: unions ℬ = unions (unions ℬ) := by
     exists a
     sorry
 
-theorem unions_topology {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): 𝒯 = unions 𝒯 := by
+theorem unions_topology {𝒯: Family X} (h𝒯: IsTopology 𝒯): 𝒯 = unions 𝒯 := by
   apply le_antisymm
   · apply unions_sub
   · intro U hU
@@ -163,13 +163,13 @@ theorem unions_topology {𝒯: Set (Set X)} (h𝒯: IsTopology 𝒯): 𝒯 = uni
     rw [h𝒰2]
     exact h𝒯.sUnion 𝒰 h𝒰1
 
-theorem base_unions (ℬ: Set (Set X)): base (unions ℬ) ℬ := by
+theorem base_unions (ℬ: Family X): base (unions ℬ) ℬ := by
   constructor
   · apply unions_sub
   · intro U hU
     simp_all [unions]
 
-theorem base_iff_unions {𝒯 ℬ: Set (Set X)}: base 𝒯 ℬ ↔ ℬ ⊆ 𝒯 ∧ 𝒯 = unions ℬ := by
+theorem base_iff_unions {𝒯 ℬ: Family X}: base 𝒯 ℬ ↔ ℬ ⊆ 𝒯 ∧ 𝒯 = unions ℬ := by
   constructor
   · intro h
     constructor
@@ -178,7 +178,7 @@ theorem base_iff_unions {𝒯 ℬ: Set (Set X)}: base 𝒯 ℬ ↔ ℬ ⊆ 𝒯 
   · sorry
 
 -- ℬ is a base iff. `unions ℬ` is a topology.
-theorem is_base_iff_unions_topology {ℬ: Set (Set X)}: is_base ℬ ↔ IsTopology (unions ℬ) := by
+theorem is_base_iff_unions_topology {ℬ: Family X}: is_base ℬ ↔ IsTopology (unions ℬ) := by
   apply Iff.intro
   · intro ⟨𝒯, h𝒯₁, h𝒯₂, h𝒯₃⟩
     have: 𝒯 = unions ℬ := by
@@ -203,11 +203,11 @@ theorem is_base_iff_unions_topology {ℬ: Set (Set X)}: is_base ℬ ↔ IsTopolo
       · apply unions_sub
       · simp [unions]
 
-structure base_conditions (ℬ: Set (Set X)): Prop where
+structure base_conditions (ℬ: Family X): Prop where
   B1: ⋃₀ ℬ = ⊤
   B2: ∀ B' ∈ ℬ, ∀ B'' ∈ ℬ, ∀ x ∈ B' ∩ B'', ∃ B ∈ ℬ, x ∈ B ∧ B ⊆ B' ∩ B''
 
-theorem is_base_iff_base_conditions {ℬ: Set (Set X)}: is_base ℬ ↔ base_conditions ℬ := by
+theorem is_base_iff_base_conditions {ℬ: Family X}: is_base ℬ ↔ base_conditions ℬ := by
   constructor
   · intro ⟨T, hT₁, hT₂⟩
     constructor

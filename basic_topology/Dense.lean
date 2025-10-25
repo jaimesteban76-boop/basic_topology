@@ -3,13 +3,13 @@ import basic_topology.Operations
 variable {X Y: Type*}
 
 
-def dense (𝒯: Set (Set X)) (A: Set X): Prop :=
+def dense (𝒯: Family X) (A: Set X): Prop :=
   ∀ U ∈ 𝒯, Set.Nonempty U → Set.Nonempty (A ∩ U)
 
-theorem dense_univ (𝒯: Set (Set X)): dense 𝒯 Set.univ := by
+theorem dense_univ (𝒯: Family X): dense 𝒯 Set.univ := by
   simp [dense]
 
-theorem dense_iff_dense_in_base (𝒯 ℬ: Set (Set X)) (h: base 𝒯 ℬ) (A: Set X): dense 𝒯 A ↔ ∀ U ∈ ℬ, Set.Nonempty U → Set.Nonempty (A ∩ U) := by
+theorem dense_iff_dense_in_base (𝒯 ℬ: Family X) (h: base 𝒯 ℬ) (A: Set X): dense 𝒯 A ↔ ∀ U ∈ ℬ, Set.Nonempty U → Set.Nonempty (A ∩ U) := by
   sorry
 
 -- some theorems ? Q is dense, I is dense, is C is countable then Cᶜ is dense
@@ -32,7 +32,7 @@ theorem indiscrete_dense (A: Set X): Set.Nonempty A → dense {∅, Set.univ} A 
   exact h
 
 -- theorem: dense in euclidean topology iff. dense in sorgenfry
-theorem dense_iff (𝒯: Set (Set X)) (A: Set X): dense 𝒯 A ↔ closure 𝒯 A = Set.univ := by
+theorem dense_iff (𝒯: Family X) (A: Set X): dense 𝒯 A ↔ closure 𝒯 A = Set.univ := by
   constructor
   · intro h
     apply Set.eq_univ_of_univ_subset
@@ -59,7 +59,7 @@ theorem dense_iff (𝒯: Set (Set X)) (A: Set X): dense 𝒯 A ↔ closure 𝒯 
     rw [Set.inter_comm]
     (expose_names; exact this_1 U this)
 
-theorem dense_antimono {𝒯₁ 𝒯₂: Set (Set X)} (h1: 𝒯₁ ⊆ 𝒯₂) {A: Set X} (h2: dense 𝒯₂ A): dense 𝒯₁ A := by
+theorem dense_antimono {𝒯₁ 𝒯₂: Family X} (h1: 𝒯₁ ⊆ 𝒯₂) {A: Set X} (h2: dense 𝒯₂ A): dense 𝒯₁ A := by
   intro U hU1
   exact h2 U (h1 hU1)
 

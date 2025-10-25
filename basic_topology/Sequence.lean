@@ -7,10 +7,10 @@ variable {X Y D: Type*}
 def tail (x: Nat → X) (t: Nat): Nat → X :=
   fun n => x (t + n)
 
-def converges (T: Set (Set X)) (x: Nat → X) (l: X): Prop :=
+def converges (T: Family X) (x: Nat → X) (l: X): Prop :=
   ∀ N ∈ Nbhds T l, ∃ t, Set.range (tail x t) ⊆ N
 
-def convergent (T: Set (Set X)) (x: Nat → X): Prop :=
+def convergent (T: Family X) (x: Nat → X): Prop :=
   ∃ l, converges T x l
 
 def converges_distance [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X) (l: X): Prop :=
@@ -51,7 +51,7 @@ theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetri
     apply ht
     exact hx
 
-def adherent_value (T: Set (Set X)) (x: Nat → X) (a: X): Prop :=
+def adherent_value (T: Family X) (x: Nat → X) (a: X): Prop :=
   ∀ N ∈ Nbhds T a, ∀ t, (Set.range (tail x t) ∩ N).Nonempty
 
 -- defn of a subsequence
@@ -59,7 +59,7 @@ def adherent_value (T: Set (Set X)) (x: Nat → X) (a: X): Prop :=
 -- a is adherent iff exists subsequence converging to a
 
 -- limits are unique in a hausdorff space
-theorem hausdorff_limit_unique_sequences (T: Set (Set X)) (h: hausdorff T) (x: Nat → X) (l1 l2: X) (h1: converges T x l1) (h2: converges T x l2): l1 = l2 := by
+theorem hausdorff_limit_unique_sequences (T: Family X) (h: hausdorff T) (x: Nat → X) (l1 l2: X) (h1: converges T x l1) (h2: converges T x l2): l1 = l2 := by
   by_contra h3
   simp[converges] at h1
   simp[converges] at h2

@@ -24,13 +24,13 @@ class Net (X: Type u) where
   directed: Directed' le
   net: Δ → X
 
-def net_converges {X: Type u} {Δ: Type v} (T: Set (Set X)) (R: Relation Δ Δ) (a: Δ → X) (x: X): Prop :=
+def net_converges {X: Type u} {Δ: Type v} (T: Family X) (R: Relation Δ Δ) (a: Δ → X) (x: X): Prop :=
   ∀ U ∈ Nbhds T x, ∃ i₀, ∀ j, R i₀ j → a j ∈ U
 
-def neighborhood_direction (T: Set (Set X)) (x: X): Endorelation (Nbhds T x) :=
+def neighborhood_direction (T: Family X) (x: X): Endorelation (Nbhds T x) :=
   fun N1 N2 => N2.1 ⊆ N1.1
 
-theorem neighborhood_direction_directed_set (T: Set (Set X)) (x: X) (hT: IsTopology T): (Directed' (neighborhood_direction T x)) := by
+theorem neighborhood_direction_directed_set (T: Family X) (x: X) (hT: IsTopology T): (Directed' (neighborhood_direction T x)) := by
   repeat constructor
   · intro Nx
     exact fun ⦃a⦄ a ↦ a
@@ -103,16 +103,16 @@ def Net.upper_subnet (R: Endorelation Δ) (x: Δ → X) (δ₀: Δ): upperset R 
 def Net.tail (R: Endorelation Δ) (x: Δ → X) (δ₀: Δ): Set X :=
   Set.range (Net.upper_subnet R x δ₀)
 
-def Net.adherent (T: Set (Set X)) (R: Endorelation Δ) (x: Δ → X) (a: X): Prop :=
+def Net.adherent (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X): Prop :=
   ∀ N ∈ Nbhds T a, ∀ δ₀, ∃ δ, R δ₀ δ ∧ x δ ∈ N
 
--- def Net.adherent' (T: Set (Set X)) (R: Endorelation Δ) (x: Δ → X) (a: X): Prop :=
+-- def Net.adherent' (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X): Prop :=
 --   ∀ N ∈ Nbhds T a, ∀ δ₀, (Set.range (Net.tail R x δ₀) ∩ N).Nonempty
 
-theorem Net.adherent_iff (T: Set (Set X)) (R: Endorelation Δ) (x: Δ → X) (a: X): adherent T R x a ↔ a ∈ ⋂ δ, closure T (Net.tail R x δ) := by
+theorem Net.adherent_iff (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X): adherent T R x a ↔ a ∈ ⋂ δ, closure T (Net.tail R x δ) := by
   sorry
 
-theorem Net.closure_mem_iff (T: Set (Set X)) (A: Set X) (x: X) :
+theorem Net.closure_mem_iff (T: Family X) (A: Set X) (x: X) :
   x ∈ closure T A ↔ ∃ Δ: Type u, ∃ R, Directed' R ∧ ∃ a: Δ → A, net_converges T R (Subtype.val ∘ a) x := by
   sorry
 

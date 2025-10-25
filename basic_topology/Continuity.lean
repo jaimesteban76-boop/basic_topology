@@ -10,13 +10,13 @@ set_option linter.style.multiGoal false
 
 variable {X Y: Type*}
 
-def continuous_at (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y) (x: X): Prop :=
+def continuous_at (TX: Family X) (TY: Set (Set Y)) (f: X → Y) (x: X): Prop :=
   ∀ N' ∈ Nbhds TY (f x), ∃ N ∈ Nbhds TX x, f '' N ⊆ N'
 
-def continuous (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): Prop :=
+def continuous (TX: Family X) (TY: Set (Set Y)) (f: X → Y): Prop :=
   ∀ x, continuous_at TX TY f x
 
-theorem continuous_iff_open_preimage_open (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y)(hTX: IsTopology TX): continuous TX TY f ↔ ∀ V ∈ TY, Set.preimage f V ∈ TX := by
+theorem continuous_iff_open_preimage_open (TX: Family X) (TY: Set (Set Y)) (f: X → Y)(hTX: IsTopology TX): continuous TX TY f ↔ ∀ V ∈ TY, Set.preimage f V ∈ TX := by
   constructor
   intro h V hV
   simp[continuous,continuous_at,Nbhds] at h
@@ -54,8 +54,8 @@ theorem continuous_iff_open_preimage_open (TX: Set (Set X)) (TY: Set (Set Y)) (f
   refine Set.preimage_mono ?_
   exact hU.right.right
 
-def continuous_iff_closed_preimage_closed (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): continuous TX TY f ↔ ∀ F ∈ closedsets TY, Set.preimage f F ∈ closedsets TX := by
+def continuous_iff_closed_preimage_closed (TX: Family X) (TY: Set (Set Y)) (f: X → Y): continuous TX TY f ↔ ∀ F ∈ closedsets TY, Set.preimage f F ∈ closedsets TX := by
   sorry
 
-def continuous_iff_image_closure_subseteq_closure_image (TX: Set (Set X)) (TY: Set (Set Y)) (f: X → Y): continuous TX TY f ↔ ∀ A: Set X, Set.image f (closure TX A) ⊆ closure TY (Set.image f A) := by
+def continuous_iff_image_closure_subseteq_closure_image (TX: Family X) (TY: Set (Set Y)) (f: X → Y): continuous TX TY f ↔ ∀ A: Set X, Set.image f (closure TX A) ⊆ closure TY (Set.image f A) := by
   sorry
