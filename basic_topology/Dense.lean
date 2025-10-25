@@ -55,7 +55,7 @@ theorem dense_iff (𝒯: Family X) (A: Set X): dense 𝒯 A ↔ closure 𝒯 A =
     have: ∀ N ∈ Nbhds 𝒯 x, (N ∩ A).Nonempty := this
     have: U ∈ Nbhds 𝒯 x := by
       simp [Nbhds]
-      exact open_neighborhood 𝒯 hx hU1
+      exact open_neighborhood hx hU1
     rw [Set.inter_comm]
     (expose_names; exact this_1 U this)
 

@@ -253,5 +253,5 @@ theorem hausdorff_iff_diagonal_closed {T: Family X} (hT: IsTopology T): hausdorf
   tauto
   exact product_topology_is_topology hT hT
 
-theorem continuous_extension_dense_domain_unique {TX: Family X} {TY: Set (Set Y)} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
+theorem continuous_extension_dense_domain_unique {TX: Family X} {TY: Family Y} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
   sorry

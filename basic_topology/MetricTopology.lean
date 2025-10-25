@@ -179,16 +179,16 @@ def MetricSpace.opensets [DistanceSpace D] (M: MetricSpace D): Set (Set M.points
 def metrizable (𝒯: Topology X) (D: Type*) [DistanceSpace D]: Prop :=
   ∃ d: Metric X D, metric_to_topology d = 𝒯
 
-theorem isometry_homeomorphic_image [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} {hX: IsMetric dX} {hY: IsMetric dY} {i: X → Y} (h: isometry dX dY i): homeomorphism (metric_opensets dX) (metric_opensets (submetric dY (Set.range i))) (Set.rangeFactorization i) := {
-  bijection := by
-    constructor
-    · have := isometry_is_injective hX hY i h
-      simp_all [Set.rangeFactorization, Function.Injective]
-      exact this
-    · exact Set.rangeFactorization_surjective
-  continuous_forward := sorry
-  continuous_inverse := sorry
-}
+-- theorem isometry_homeomorphic_image [DistanceSpace D] {dX: X → X → D} {dY: Y → Y → D} {hX: IsMetric dX} {hY: IsMetric dY} {i: X → Y} (h: isometry dX dY i): homeomorphism (metric_opensets dX) (metric_opensets (submetric dY (Set.range i))) (Set.rangeFactorization i) := {
+--   bijection := by
+--     constructor
+--     · have := isometry_is_injective hX hY i h
+--       simp_all [Set.rangeFactorization, Function.Injective]
+--       exact this
+--     · exact Set.rangeFactorization_surjective
+--   continuous_forward := sorry
+--   continuous_inverse := sorry
+-- }
 
 theorem continuous_metric_at_iff [DistanceSpace D] (dX: X → X → D) (dY: Y → Y → D) (f: X → Y) (x: X): continuous_metric_at dX dY f x ↔ continuous_at (metric_opensets dX) (metric_opensets dY) f x := by
   sorry

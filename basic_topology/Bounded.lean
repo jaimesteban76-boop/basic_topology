@@ -42,7 +42,7 @@ theorem bounded_subset [CompleteDistanceSpace D] (d: X → X → D) {A B: Set X}
   exact lt_of_le_of_lt (diameter_monotone _ h1) h2
 
 -- TODO if a finite family is all bounded their union is bounded.
-theorem bounded_finite_union [CompleteDistanceSpace D] (d: X → X → D) (F: Family X) (h1: Finite F) (h2: ∀ A ∈ F, bounded d A): bounded d (⋃₀ F) := by
+theorem bounded_finite_union [CompleteDistanceSpace D] (d: X → X → D) (F: Set (Set X)) (h1: Finite F) (h2: ∀ A ∈ F, bounded d A): bounded d (⋃₀ F) := by
   sorry
 
 def totally_bounded [CompleteDistanceSpace D] (d: X → X → D) (A: Set X): Prop :=

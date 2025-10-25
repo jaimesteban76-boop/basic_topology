@@ -3,13 +3,13 @@ import basic_topology.Operations
 variable {X Y: Type*}
 
 -- Binary product topology
-def product_topology_basis (TX: Family X) (TY: Set (Set Y)): Set (Set (X × Y)) :=
+def product_topology_basis (TX: Family X) (TY: Family Y): Set (Set (X × Y)) :=
   {UV | ∃ U V, U ∈ TX ∧ V ∈ TY ∧ UV = Set.prod U V}
 
-def product_topology (TX: Family X) (TY: Set (Set Y)): Set (Set (X × Y)) :=
+def product_topology (TX: Family X) (TY: Family Y): Set (Set (X × Y)) :=
   unions (product_topology_basis TX TY)
 
-theorem product_topology_is_topology {TX: Family X} {TY: Set (Set Y)} (hTX: IsTopology TX) (hTY: IsTopology TY): IsTopology (product_topology TX TY) := by
+theorem product_topology_is_topology {TX: Family X} {TY: Family Y} (hTX: IsTopology TX) (hTY: IsTopology TY): IsTopology (product_topology TX TY) := by
   apply is_base_iff_unions_topology.mp
   apply is_base_iff_base_conditions.mpr
   constructor
@@ -42,7 +42,7 @@ theorem product_topology_is_topology {TX: Family X} {TY: Set (Set Y)} (hTX: IsTo
 
 -- Product of open sets is open
 
-theorem product_topology_product_open {TX: Family X} {TY: Set (Set Y)}
+theorem product_topology_product_open {TX: Family X} {TY: Family Y}
   {U: Set X} (hU: U ∈ TX) {V: Set Y} (hV: V ∈ TY) :
   Set.prod U V ∈ product_topology TX TY := by
   apply unions_mem
@@ -50,17 +50,17 @@ theorem product_topology_product_open {TX: Family X} {TY: Set (Set Y)}
 
 -- Projections are open
 
-theorem product_topology_left_projection_open {TX: Family X} {TY: Set (Set Y)} (hTX: IsTopology TX) (hTY: IsTopology TY)
+theorem product_topology_left_projection_open {TX: Family X} {TY: Family Y} (hTX: IsTopology TX) (hTY: IsTopology TY)
   {U: Set (X × Y)} (hU: U ∈ product_topology TX TY) :
   (fun x => x.1) '' U ∈ TX :=
   sorry
 
-theorem product_topology_right_projection_open {TX: Family X} {TY: Set (Set Y)} (hTX: IsTopology TX) (hTY: IsTopology TY)
+theorem product_topology_right_projection_open {TX: Family X} {TY: Family Y} (hTX: IsTopology TX) (hTY: IsTopology TY)
   {U: Set (X × Y)} (hU: U ∈ product_topology TX TY) :
   (fun x => x.2) '' U ∈ TY :=
   sorry
 
-theorem boxes_base_product_topology {TX: Family X} {TY: Set (Set Y)}: base (product_topology TX TY) (product_topology_basis TX TY) := by
+theorem boxes_base_product_topology {TX: Family X} {TY: Family Y}: base (product_topology TX TY) (product_topology_basis TX TY) := by
   rw [base_iff_unions]
   constructor
   · rw [product_topology]
@@ -92,7 +92,7 @@ theorem box_equal_prod_projections {A: Set X}{B: Set Y}: A.prod B = (Set.image P
       exact hq_mem.2
     exact ⟨ hA,hB⟩
 
-theorem boxes_subset_everywhere {TX: Family X} {TY: Set (Set Y)} (U: Set (X×Y))(hTX: IsTopology TX)(hTY: IsTopology TY)(hU: U ∈ product_topology TX TY): ∀x∈ U , ∃ A∈ product_topology_basis TX TY , x∈A ∧ A⊆ U := by
+theorem boxes_subset_everywhere {TX: Family X} {TY: Family Y} (U: Set (X×Y))(hTX: IsTopology TX)(hTY: IsTopology TY)(hU: U ∈ product_topology TX TY): ∀x∈ U , ∃ A∈ product_topology_basis TX TY , x∈A ∧ A⊆ U := by
   intro x hx
   rw[open_iff_eq_interior] at hU
   · rw [hU] at hx

@@ -158,7 +158,7 @@ theorem closure_eq (𝒯: Family X) (A: Set X): closure 𝒯 A = (interior 𝒯 
   · intro hx
     simp_all [interior, neighborhood, interior_point]
     intro U h1 h2 h3
-    have := hx U (open_neighborhood 𝒯 h2 h1)
+    have := hx U (open_neighborhood h2 h1)
     have: U ∩ A = ∅ := by
       ext
       constructor
