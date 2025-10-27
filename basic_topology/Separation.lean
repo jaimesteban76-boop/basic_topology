@@ -14,14 +14,15 @@ def OpenSeparable (T: Family X): Endorelation (Set X) :=
 
 variable {I: Type*} [Zero I] [One I]
 
-def FunctionSeparable (T: Family X) (T': Family I): Endorelation (Set X) :=
-  fun A B => ∃ f, Continuous T T' f ∧ (∀ a ∈ A, f a = 0) ∧ (∀ b ∈ B, f b = 1)
+def FunctionSeparable (T: Family X) (TI: Family I): Endorelation (Set X) :=
+  fun A B => ∃ f, Continuous T TI f ∧ (∀ a ∈ A, f a = 0) ∧ (∀ b ∈ B, f b = 1)
 
 -- Assuming 0, 1 are distinguishable by open sets in the target space, then separability by continuous function implies separability by open sets.
 
 variable {T: Family X} {TI: Family I}
 
-theorem FunctinSeparable_implies_OpenSeparable {A B: Set X} (h₀: OpenSeparable TI {0} {1}) (h: FunctionSeparable T TI A B): OpenSeparable T A B := by
+-- [0, 1/2) and (1/2, 1]
+theorem FunctionSeparable_implies_OpenSeparable {A B: Set X} (h₀: OpenSeparable TI {0} {1}) (h: FunctionSeparable T TI A B): OpenSeparable T A B := by
   obtain ⟨U, V, h₁, h₂, h₃, h₄, h₅⟩ := h₀
   obtain ⟨f, h₆, h₇, h₈⟩ := h
   exists f ⁻¹' U, f ⁻¹' V
@@ -76,7 +77,7 @@ theorem hausdorff_implies_fréchet (𝒯: Family X): hausdorff 𝒯 → fréchet
 
 theorem completely_regular_implies_regular (h₀: OpenSeparable TI {0} {1}) (h: completely_regular T TI): regular T := by
   intro x A h₁ h₂
-  exact FunctinSeparable_implies_OpenSeparable h₀ (h A x h₁ h₂)
+  exact FunctionSeparable_implies_OpenSeparable h₀ (h A x h₁ h₂)
 
 theorem normal_implies_completely_regular (h₀: OpenSeparable TI {0} {1}) (h: normal T): completely_regular T TI := by
   intro A B h₁ h₂

@@ -15,7 +15,7 @@ variable {X: Type u} {Y: Type v} {Δ: Type u}
 def upperbounded (R: Relation X Y): Prop :=
   ∀ x₁ x₂, ∃ y, R x₁ y ∧ R x₂ y
 
-structure directed (R: Endorelation X): Prop extends Preorder' R where
+structure directed (R: Endorelation X): Prop extends preorder R where
   upperbounded: upperbounded R
 
 def net_converges {X: Type u} {Δ: Type v} (T: Family X) (R: Relation Δ Δ) (a: Δ → X) (x: X): Prop :=

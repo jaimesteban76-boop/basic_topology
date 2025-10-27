@@ -5,6 +5,16 @@ variable {X Y: Type*} {𝒯: Family X}
 def neighborhood (𝒯: Family X) (N: Set X) (x: X): Prop :=
   ∃ U ∈ 𝒯, x ∈ U ∧ U ⊆ N
 
+def OpenNeighborhood (𝒯: Family X) (U: Set X) (x: X): Prop :=
+  x ∈ U ∧ U ∈ 𝒯
+
+theorem OpenNeighborhood.neighborhood (h: OpenNeighborhood 𝒯 U x): neighborhood 𝒯 U x := by
+  exists U
+  repeat' constructor
+  exact h.2
+  exact h.1
+  exact fun ⦃a⦄ a ↦ a
+
 -- The whole space is a neighborhood of every point
 theorem neighborhood_univ (h: IsTopology 𝒯) (x: X): neighborhood 𝒯 Set.univ x := by
   exists Set.univ
