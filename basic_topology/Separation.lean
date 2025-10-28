@@ -14,8 +14,8 @@ def OpenSeparable (T: Family X): Endorelation (Set X) :=
 
 variable {I: Type*} [Zero I] [One I]
 
-def FunctionSeparable (T: Family X) (T': Family I): Endorelation (Set X) :=
-  fun A B => ∃ f, Continuous T T' f ∧ (∀ a ∈ A, f a = 0) ∧ (∀ b ∈ B, f b = 1)
+def FunctionSeparable (T: Family X) (TI: Family I): Endorelation (Set X) :=
+  fun A B => ∃ f, Continuous T TI f ∧ (∀ a ∈ A, f a = 0) ∧ (∀ b ∈ B, f b = 1)
 
 -- Assuming 0, 1 are distinguishable by open sets in the target space, then separability by continuous function implies separability by open sets.
 

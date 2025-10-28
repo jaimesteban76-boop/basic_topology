@@ -79,8 +79,6 @@ theorem univ_open {𝒯: Family X} (h𝒯: IsTopology 𝒯): Set.univ ∈ 𝒯 :
 theorem binary_inter_open {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∩ B ∈ 𝒯 := by
   exact (finite_inter_iff.mp h𝒯.finite_sInter).right _ hA _ hB
 
-
-
 def Open (𝒯: Family X): Family X :=
   𝒯
 
@@ -89,8 +87,6 @@ def Closed (𝒯: Family X): Family X :=
 
 def Clopen (𝒯: Family X): Family X :=
   fun A => Open 𝒯 A ∧ Closed 𝒯 A
-
-
 
 theorem Closed_sInter {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ Closed 𝒯, ⋂₀ 𝒰 ∈ Closed 𝒯 := by
   sorry

@@ -16,14 +16,14 @@ Subspace --> Compact
 Sequence --> Compact
 Metric --> Complete
 Sequence --> Complete
-Homeomorphism --> Connected
+Continuity --> Connected
 Operations --> Continuity
 Operations --> Dense
 Relation --> Homeomorphism
 Continuity --> Homeomorphism
 Mathlib --> Metric
 Metric --> MetricTopology
-Homeomorphism --> MetricTopology
+Continuity --> MetricTopology
 Topology --> Neighborhood
 Relation --> Net
 Relation --> Continuity

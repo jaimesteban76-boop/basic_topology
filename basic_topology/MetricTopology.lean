@@ -6,7 +6,6 @@ The topology associated to a metric space.
 
 import basic_topology.Metric
 import basic_topology.Continuity
-import basic_topology.Homeomorphism
 
 variable {X Y D: Type*}
 
