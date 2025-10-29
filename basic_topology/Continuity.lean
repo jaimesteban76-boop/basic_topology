@@ -14,20 +14,45 @@ variable {X Y Z: Type*} {T₁: Family X} {T₂: Family Y} {T₃: Family Z}
 def Continuous (T₁: Family X) (T₂: Family Y) (f: X → Y): Prop :=
   ∀ V, Open T₂ V → Open T₁ (f ⁻¹' V)
 
+-- The identity function is continuous
 theorem Continuous.id (T: Family X): Continuous T T (fun x => x) := by
   exact fun _ h => h
 
+-- The composition of continuous functions is continuous
 theorem Continuous.comp {f: X → Y} {g: Y → Z} (hf: Continuous T₁ T₂ f) (hg: Continuous T₂ T₃ g): Continuous T₁ T₃ (g ∘ f) := by
   intro _ hW
   rw [Set.preimage_comp]
   apply hf
   exact hg _ hW
 
+-- The constant function is continuous
 theorem Continuous.const (hT₁: IsTopology T₁) (y₀: Y): Continuous T₁ T₂ (fun _ => y₀) := by
   intro V _
   by_cases hy₀: y₀ ∈ V <;> simp_all
   exact univ_open hT₁
   exact empty_open hT₁
+
+-- Every function on a discrete domain is continuous
+theorem continuous_discrete_domain (T: Family Y) (f: X → Y): Continuous (DiscreteTopology X) T f := by
+  intro V hV
+  trivial
+
+-- Every function with the indiscrete codomain is continuous.
+theorem continuous_indiscrete_codomain {T: Family X} (hT: IsTopology T) (f: X → Y): Continuous T (IndiscreteTopology Y) f := by
+  intro _ hV
+  match hV with
+  | Or.inl _ => simp_all; apply empty_open hT
+  | Or.inr _ => simp_all; exact univ_open hT
+
+-- If f is (T₁, T₂)-continuous and T₁ ⊆ T' (T' is a refinement of T₁) then f is (T', T₂)-continuous
+theorem continuous_refine_domain {T': Family X} (hT': T₁ ⊆ T') {f: X → Y} (h: Continuous T₁ T₂ f): Continuous T' T₂ f := by
+  intro _ hV
+  exact hT' (h _ hV)
+
+-- If f is (T₁, T₂)-continuous and T' ⊆ T₂ (T' is a coarsening of T₂) then f is (T₁, T')-continuous
+theorem continuous_coarsen_codomain {T': Family Y} (hT': T' ⊆ T₂) {f: X → Y} (h: Continuous T₁ T₂ f): Continuous T₁ T' f := by
+  intro _ hV
+  exact h _ (hT' hV)
 
 def ContinuousAt (T₁: Family X) (T₂: Family Y) (f: X → Y) (x: X): Prop :=
   ∀ N₂ ∈ Nbhds T₂ (f x), ∃ N₁ ∈ Nbhds T₁ x, f '' N₁ ⊆ N₂

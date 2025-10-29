@@ -126,10 +126,17 @@ theorem univ_clopen (h𝒯: IsTopology 𝒯): Clopen 𝒯 Set.univ := by
 -- TODO: finite intersections and unions of clopen sets are clopen
 
 -- the set of all subsets is a topology, aka the discrete topology
+-- todo: integrate this definition
+def DiscreteTopology (X: Type*): Family X :=
+  ⊤
+
 theorem discrete_is_topology (X: Type*): IsTopology (@Set.univ (Set X)) := {
   sUnion := by intros; trivial
   finite_sInter := by intros; trivial
 }
+
+def IndiscreteTopology (X: Type*): Family X :=
+  {⊥, ⊤}
 
 -- the indiscrete (aka antidiscrete) topology! it is slightly less trivial to prove..
 theorem indiscrete_is_topology (X: Type*): IsTopology {∅, @Set.univ X} := {
