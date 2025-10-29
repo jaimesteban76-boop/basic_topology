@@ -1,3 +1,11 @@
+/-
+
+Nets in a topological space.
+
+TODO: a type class for nets?
+
+-/
+
 import basic_topology.Relation
 import basic_topology.Neighborhood
 import basic_topology.Continuity
@@ -39,6 +47,7 @@ theorem neighborhood_direction_directed_set (T: Family X) (x: X) (hT: IsTopology
       · simp_all [Nbhds]
         exact neighborhood_binary_inter hT hN1 hN2
       · exact Set.inter_subset_right
+
 
 theorem continuous_at_iff_all_nets_converge {X: Type u} {T: Family X} {T': Family Y} (hT: IsTopology T) (f: X → Y) (x₀: X) :
   continuous_at T T' f x₀ ↔ ∀ Δ: Type u, ∀ R, directed R → ∀ x: Δ → X , net_converges T R x x₀ → net_converges T' R (f ∘ x) (f x₀) := by

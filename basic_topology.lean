@@ -5,7 +5,6 @@ import basic_topology.Complete
 import basic_topology.Connected
 import basic_topology.Continuity
 import basic_topology.Dense
-import basic_topology.Homeomorphism
 import basic_topology.Metric
 import basic_topology.MetricTopology
 import basic_topology.Neighborhood

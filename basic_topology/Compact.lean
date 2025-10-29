@@ -30,3 +30,23 @@ theorem compactset_iff_compact_subspace (T: Family X) (A: Set X) :
 
 theorem compact_closed_subset (hT: hausdorff T) {K: Set X} (hK: compactset T K): Closed T K := by
   sorry
+
+def Family.image (f: X → Y) (F: Family X): Family Y :=
+  {f '' U | U ∈ F}
+
+def Family.preimage (f: X → Y) (F: Family Y): Family X :=
+  {f ⁻¹' V | V ∈ F}
+
+theorem continuous_image_compact (hT₁: compact T₁) (f: X → Y)
+  (hf₁: Continuous T₁ T₂ f) (hf₂: Function.Surjective f): compact T₂ := by
+  intro 𝒱 h𝒱₁ h𝒱₂
+  let 𝒰 := Family.preimage f 𝒱
+  have: ⋃₀ 𝒰 = ⊤ := by sorry
+  have := hT₁ 𝒰 sorry this
+  obtain ⟨C₀, hC₀⟩ := this
+  exists Family.image f C₀
+  constructor
+  sorry
+  constructor
+  sorry
+  sorry

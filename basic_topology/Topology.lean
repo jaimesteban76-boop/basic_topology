@@ -32,21 +32,32 @@ structure TopologicalSpace: Type (u + 1) where
   points: Type u
   topology: Topology points
 
-theorem empty_open {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∅ ∈ 𝒯 := by
+def Open (𝒯: Family X): Family X :=
+  𝒯
+
+def Closed (𝒯: Family X): Family X :=
+  fun A => Open 𝒯 Aᶜ
+
+def Clopen (𝒯: Family X): Family X :=
+  fun A => Open 𝒯 A ∧ Closed 𝒯 A
+
+variable {𝒯: Family X}
+
+theorem empty_open (h𝒯: IsTopology 𝒯): Open 𝒯 ∅ := by
   have: (∅: Set X) = ⋃₀ ∅ := by ext; simp
   rw [this]
   apply h𝒯.sUnion
   exact Set.empty_subset 𝒯
 
 -- Binary unions and intersections of open sets are open
-theorem binary_union_open {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∪ B ∈ 𝒯 := by
+theorem binary_union_open (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: Open 𝒯 A) (hB: Open 𝒯 B): Open 𝒯 (A ∪ B) := by
   have: A ∪ B = ⋃₀ {A, B} := by ext; simp
   rw [this]
   apply h𝒯.sUnion
   exact Set.pair_subset hA hB
 
 -- The union of a sequence of open sets is open
-theorem seq_union_open {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, A n ∈ 𝒯): Set.iUnion A ∈ 𝒯 := by
+theorem seq_union_open (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, A n ∈ 𝒯): Set.iUnion A ∈ 𝒯 := by
   apply h𝒯.sUnion
   exact Set.range_subset_iff.mpr h
 
@@ -73,38 +84,46 @@ theorem seq_union_open {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A: ℕ → Set
     · exact hU1 hS
     · exact ih
 
-theorem univ_open {𝒯: Family X} (h𝒯: IsTopology 𝒯): Set.univ ∈ 𝒯 := by
+theorem univ_open (h𝒯: IsTopology 𝒯): Open 𝒯 Set.univ := by
   exact (finite_inter_iff.mp h𝒯.finite_sInter).left
 
-theorem binary_inter_open {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∩ B ∈ 𝒯 := by
+theorem binary_inter_open (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: A ∈ 𝒯) (hB: B ∈ 𝒯): A ∩ B ∈ 𝒯 := by
   exact (finite_inter_iff.mp h𝒯.finite_sInter).right _ hA _ hB
 
-def Open (𝒯: Family X): Family X :=
-  𝒯
+theorem empty_closed (h𝒯: IsTopology 𝒯): Closed 𝒯 ∅ := by
+  rw [Closed, Set.compl_empty]
+  exact univ_open h𝒯
 
-def Closed (𝒯: Family X): Family X :=
-  fun A => Open 𝒯 Aᶜ
+theorem univ_closed (h𝒯: IsTopology 𝒯): Closed 𝒯 Set.univ := by
+  rw [Closed, Set.compl_univ]
+  exact empty_open h𝒯
 
-def Clopen (𝒯: Family X): Family X :=
-  fun A => Open 𝒯 A ∧ Closed 𝒯 A
-
-theorem Closed_sInter {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ Closed 𝒯, ⋂₀ 𝒰 ∈ Closed 𝒯 := by
+theorem Closed_sInter (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ Closed 𝒯, ⋂₀ 𝒰 ∈ Closed 𝒯 := by
   sorry
 
-theorem Closed_finite_sUnion {𝒯: Family X} (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ Closed 𝒯, Finite 𝒰 → ⋃₀ 𝒰 ∈ Closed 𝒯 := by
+theorem Closed_finite_sUnion (h𝒯: IsTopology 𝒯): ∀ 𝒰 ⊆ Closed 𝒯, Finite 𝒰 → ⋃₀ 𝒰 ∈ Closed 𝒯 := by
   sorry
 
-theorem binary_union_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: Closed 𝒯 A) (hB: Closed 𝒯 B): Closed 𝒯 (A ∪ B) := by
+theorem binary_union_closed (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: Closed 𝒯 A) (hB: Closed 𝒯 B): Closed 𝒯 (A ∪ B) := by
   rw [Closed, Set.compl_union]
   exact binary_inter_open h𝒯 hA hB
 
-theorem binary_inter_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: Closed 𝒯 A) (hB: Closed 𝒯 B): Closed 𝒯 (A ∩ B) := by
+theorem binary_inter_closed (h𝒯: IsTopology 𝒯) {A B: Set X} (hA: Closed 𝒯 A) (hB: Closed 𝒯 B): Closed 𝒯 (A ∩ B) := by
   rw [Closed, Set.compl_inter]
   exact binary_union_open h𝒯 hA hB
 
 -- The union of a sequence of open sets is open
-theorem seq_inter_closed {𝒯: Family X} (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, Closed 𝒯 (A n)): Closed 𝒯 (Set.iInter A) := by
+theorem seq_inter_closed (h𝒯: IsTopology 𝒯) {A: ℕ → Set X} (h: ∀ n, Closed 𝒯 (A n)): Closed 𝒯 (Set.iInter A) := by
   exact Closed_sInter h𝒯 _ (Set.range_subset_iff.mpr h)
+
+-- clopen sets
+theorem empty_clopen (h𝒯: IsTopology 𝒯): Clopen 𝒯 ∅ := by
+  exact ⟨empty_open h𝒯, empty_closed h𝒯⟩
+
+theorem univ_clopen (h𝒯: IsTopology 𝒯): Clopen 𝒯 Set.univ := by
+  exact ⟨univ_open h𝒯, univ_closed h𝒯⟩
+
+-- TODO: finite intersections and unions of clopen sets are clopen
 
 -- the set of all subsets is a topology, aka the discrete topology
 theorem discrete_is_topology (X: Type*): IsTopology (@Set.univ (Set X)) := {

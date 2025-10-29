@@ -165,7 +165,17 @@ theorem Homeomorphic.trans: transitive Homeomorphic.relation := by
   let g := Classical.choice h2
   exact Nonempty.intro (Homeomorphism.comp f g)
 
-
 -- a property is called a topological property if it's preserved under homeomorphism
-def topological_property (P: TopologicalSpace → Prop): Prop :=
-  ∀ X Y: TopologicalSpace, Homeomorphic.relation X Y → P X → P Y
+def TopologicalProperty (P: TopologicalSpace → Prop): Prop :=
+  ∀ {X Y: TopologicalSpace}, Homeomorphic.relation X Y → (P X → P Y)
+
+theorem TopologicalProperty_iff {P: TopologicalSpace → Prop} (hP: TopologicalProperty P):
+  ∀ X Y, Homeomorphic.relation X Y → (P X ↔ P Y) := by
+intro X Y h₀
+constructor
+· exact hP h₀
+· exact hP (Homeomorphic.symm X Y h₀)
+
+-- TODO: Any topological property
+
+-- Example: every space X is homeomorphic to X × 1 (the one-point space)

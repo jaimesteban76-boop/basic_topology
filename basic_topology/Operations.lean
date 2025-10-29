@@ -3,6 +3,8 @@ import basic_topology.Neighborhood
 
 variable {X Y: Type*}
 
+-- TODO: rename frontier to boundary.
+
 -- def Interior (𝒯: Family X) (A: Set X): Set X :=
 --   ⋃₀ {U | U ∈ 𝒯 ∧ U ⊆ A}
 
