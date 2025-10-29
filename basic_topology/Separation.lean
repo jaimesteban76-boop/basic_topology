@@ -380,5 +380,57 @@ theorem hausdorff_iff_diagonal_closed {T: Family X} (hT: IsTopology T): hausdorf
   tauto
   exact product_topology_is_topology hT hT
 
+theorem hausdorff_iff_open_separable {T: Family X}: hausdorff T ↔ ∀ x y , x≠y → OpenSeparable T {x} {y} := by
+  rw[hausdorff]
+  constructor
+  intro hT x y hxy
+  rw[OpenSeparable]
+  apply hT at hxy
+  simp[Nbhds] at hxy
+  obtain ⟨A,⟨hA,B,hB,hAB ⟩  ⟩:= hxy
+  simp_all[neighborhood]
+  obtain⟨ U,hU⟩ := hA
+  obtain⟨ V,hV⟩ := hB
+  use U
+  constructor
+  exact hU.1
+  use V
+  constructor
+  exact hV.1
+  constructor
+  by_contra h
+  rw[Set.not_disjoint_iff] at h
+  obtain ⟨ x,⟨hxU,hxV ⟩ ⟩ := h
+  apply hU.2.2 at hxU
+  apply hV.2.2 at hxV
+  have hc: ¬ (Disjoint A B):= by
+    rw[Set.not_disjoint_iff]
+    use x
+  exact hc hAB
+  constructor
+  exact hU.2.1
+  exact hV.2.1
+  intro h x y hxy
+  apply h at hxy
+  rw[OpenSeparable] at hxy
+  obtain ⟨U,⟨V,hU1,hV1,hUV,hxU,hyV ⟩ ⟩:= hxy
+  use U, V
+  simp [Nbhds]
+  repeat' (apply And.intro)
+  apply open_neighborhood
+  exact hxU rfl
+  exact hU1
+  apply open_neighborhood
+  exact hyV rfl
+  exact hV1
+  exact hUV
+
+
+
+
+
+
+
+
 theorem continuous_extension_dense_domain_unique {TX: Family X} {TY: Family Y} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
   sorry
