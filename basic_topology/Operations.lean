@@ -106,7 +106,7 @@ theorem interior_eq_union_open_subsets {𝒯: Family X} {A: Set X}: interior �
     exists U
 
 -- A set is open iff. it is its own interior
-theorem open_iff_eq_interior {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A: Set X): A ∈ 𝒯 ↔ A = interior 𝒯 A := by
+theorem open_iff_eq_interior {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A: Set X): Open 𝒯 A ↔ A = interior 𝒯 A := by
   constructor
   · intro h
     apply Set.Subset.antisymm_iff.mpr

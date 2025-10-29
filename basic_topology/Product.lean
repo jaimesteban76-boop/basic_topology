@@ -92,9 +92,9 @@ theorem box_equal_prod_projections {A: Set X}{B: Set Y}: A.prod B = (Set.image P
       exact hq_mem.2
     exact ⟨ hA,hB⟩
 
-theorem boxes_subset_everywhere {TX: Family X} {TY: Family Y} (U: Set (X×Y))(hTX: IsTopology TX)(hTY: IsTopology TY)(hU: U ∈ product_topology TX TY): ∀x∈ U , ∃ A∈ product_topology_basis TX TY , x∈A ∧ A⊆ U := by
+theorem boxes_subset_everywhere {TX: Family X} {TY: Family Y} (U: Set (X×Y))(hTX: IsTopology TX)(hTY: IsTopology TY)(hU: Open (product_topology TX TY) U): ∀x∈ U , ∃ A∈ product_topology_basis TX TY , x∈A ∧ A⊆ U := by
   intro x hx
-  rw[open_iff_eq_interior] at hU
+  rw[ open_iff_eq_interior] at hU
   · rw [hU] at hx
     rw [interior_iff_basis_element boxes_base_product_topology] at hx
     exact hx
