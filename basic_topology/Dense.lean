@@ -1,4 +1,5 @@
 import basic_topology.Operations
+import basic_topology.Continuity
 
 variable {X Y: Type*}
 

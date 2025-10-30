@@ -429,8 +429,57 @@ theorem hausdorff_iff_open_separable {T: Family X}: hausdorff T ↔ ∀ x y , x�
 
 
 
+/-
 
+the space X is hausdorff if for every x ≠ y
+there exist disjoint neighborhoods U of x and V of y
 
+Every metric space is hausdorff
+let x ≠ y
 
-theorem continuous_extension_dense_domain_unique {TX: Family X} {TY: Family Y} (A: Set X) (hA: dense TX A) (hY: hausdorff TY) (f1 f2: X → Y) (h: ∀ x ∈ A, f1 x = f2 x): f1 = f2 := by
-  sorry
+um .. i mean pick some distance and neighborhood is any point within that dist
+
+idk :3
+i guess you can have radius = dist(x, y) / 2 ?
+
+Suppose by contradiction exists x, f(x) ≠ g(x)
+
+oh then is like um disjoint neighborhoods
+
+so I get open nbhds U of f(x) and V of g(x) which are disjoint
+
+but by density exist z1 in U ∩ D such that f(z1) = g(z1)
+
+-/
+
+theorem Disjoint.notMem_inter {A B: Set X} (h: Disjoint A B) (hx: x ∈ A ∩ B): False := by
+  have: x ∈ A := by exact Set.mem_of_mem_inter_left hx
+  have := Disjoint.notMem_of_mem_left h this
+  have: x ∈ B := by exact Set.mem_of_mem_inter_right hx
+  (expose_names; exact this_2 this)
+
+theorem continuous_eq_dense_eq (T₁: Family X) (T₂: Family Y)
+  (hT₁: IsTopology T₁)
+  (f g: X → Y) (D: Set X) (hD: dense T₁ D)
+  (hf: Continuous T₁ T₂ f)
+  (hg: Continuous T₁ T₂ g)
+  (h: ∀ x ∈ D, f x = g x) (h2: Hausdorff T₂): f = g := by
+  ext x
+  by_contra h'
+  obtain ⟨U, V, h3, h4, h5, h6, h7⟩ := h2 (f x) (g x) h'
+  simp_all
+  have U_pre := hf U h3
+  have V_pre := hg V h4
+  let W := (f ⁻¹' U) ∩ (g ⁻¹' V)
+  have: Open T₁ W := binary_inter_open hT₁ U_pre V_pre
+  have W_nonempty: W.Nonempty := by exists x
+  have: (D ∩ W).Nonempty := by exact hD W this W_nonempty
+  obtain ⟨z, hz⟩ := this
+  have fz_eq_gz: f z = g z := by
+    apply h
+    exact Set.mem_of_mem_inter_left hz
+  have fz_in_U: f z ∈ U := by simp_all [W]
+  have gz_in_V: g z ∈ V := by simp_all [W]
+  have fz_in_V: f z ∈ V := by exact Set.mem_of_eq_of_mem fz_eq_gz gz_in_V
+  have: f z ∈ U ∩ V := by exact Set.mem_inter fz_in_U fz_in_V
+  exact Disjoint.notMem_inter h5 this

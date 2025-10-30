@@ -77,6 +77,17 @@ def ConnectedSet (T: Family X) (A: Set X): Prop :=
 -- then A∩C₁∩C₂ nonempty.
 
 -- TODO: Any empty set and singleton are connected
+theorem empty_connected: ConnectedSpace EmptySpace := by
+  intro _ _ _ _ _ _ _
+  sorry -- should be obvious contradiction
+
+theorem singleton_connected: ConnectedSpace SingletonSpace := by
+  intro U V _ _ h3 h4 _
+  have: U = {Unit.unit} := by exact (Set.Nonempty.subset_singleton_iff h3).mp fun ⦃a⦄ ↦ congrFun rfl
+  simp [this]
+  have: V = {Unit.unit} := by exact (Set.Nonempty.subset_singleton_iff h4).mp fun ⦃a⦄ ↦ congrFun rfl
+  simp [this]
+
 
 -- TODO: In a Hausdorff space every finite set of > 1 point is not connected.
 

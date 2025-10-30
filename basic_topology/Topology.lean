@@ -127,19 +127,19 @@ theorem univ_clopen (h𝒯: IsTopology 𝒯): Clopen 𝒯 Set.univ := by
 
 -- the set of all subsets is a topology, aka the discrete topology
 -- todo: integrate this definition
-def DiscreteTopology (X: Type*): Family X :=
+def DiscreteTopology (X: Type u): Family X :=
   ⊤
 
-theorem discrete_is_topology (X: Type*): IsTopology (@Set.univ (Set X)) := {
+theorem discrete_is_topology (X: Type u): IsTopology (DiscreteTopology X) := {
   sUnion := by intros; trivial
   finite_sInter := by intros; trivial
 }
+-- todo: can we replace with this?
+def DiscreteTopology' (X: Type u): Topology X :=
+  ⟨⊤, by constructor; repeat intros; trivial⟩
 
-def IndiscreteTopology (X: Type*): Family X :=
-  {⊥, ⊤}
-
--- the indiscrete (aka antidiscrete) topology! it is slightly less trivial to prove..
-theorem indiscrete_is_topology (X: Type*): IsTopology {∅, @Set.univ X} := {
+-- the indiscrete (aka antidiscrete) topology
+theorem indiscrete_is_topology (X: Type u): IsTopology {∅, @Set.univ X} := {
   sUnion := by apply Set.sUnion_mem_empty_univ
   finite_sInter := by
     intro 𝒰 h𝒰 _
@@ -154,7 +154,19 @@ theorem indiscrete_is_topology (X: Type*): IsTopology {∅, @Set.univ X} := {
       | Or.inr h' => exact h'
 }
 
+def IndiscreteTopology (X: Type u): Family X :=
+  {∅, @Set.univ X}
 
+def IndiscreteTopology' (X: Type u): Topology X :=
+  ⟨{∅, @Set.univ X}, indiscrete_is_topology X⟩
+
+-- Single-point space
+def SingletonSpace: TopologicalSpace :=
+  ⟨Unit, ⊤, discrete_is_topology Unit⟩
+
+-- Empty space
+def EmptySpace: TopologicalSpace :=
+  ⟨Empty, ⊤, discrete_is_topology Empty⟩
 
 -- the Sierpiński topology define on Bool with {true} open
 def SierpińskiOpen: Set (Set Bool) :=
