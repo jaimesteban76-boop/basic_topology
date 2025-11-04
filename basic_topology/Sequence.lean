@@ -1,6 +1,7 @@
 import basic_topology.Separation
 import basic_topology.MetricTopology
 
+
 variable {X Y D: Type*}
 
 -- limit of a sequence in terms of the tail
@@ -18,6 +19,11 @@ def converges_distance [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X)
 
 def convergent_distance [DistanceSpaceStruct D] (d: X → X → D) (x: Nat → X): Prop :=
   ∃ l, converges_distance d x l
+def increasing_seq (x: Nat → Nat ): Prop :=
+  ∀ y1 y2 , x y1 > x y2 ↔ y1 > y2
+
+def subsequence [DistanceSpaceStruct D] (x: Nat → X) (y: Nat → Nat ): (Nat→ X):=
+x ∘ y
 
 -- equivalent definition in a metric space
 theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetric d)(x: Nat → X) (l: X): converges (metric_open d) x l ↔ converges_distance d x l := by

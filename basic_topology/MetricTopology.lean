@@ -194,3 +194,4 @@ theorem continuous_metric_at_iff [DistanceSpace D] (dX: X → X → D) (dY: Y �
 
 theorem continuous_metric_iff [DistanceSpace D] (dX: X → X → D) (dY: Y → Y → D) (f: X → Y) (x: X): continuous_metric dX dY f ↔ continuous (metric_opens dX) (metric_opens dY) f := by
   sorry
+--totally_bounded and complete iff compact--

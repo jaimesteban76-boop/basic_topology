@@ -1,4 +1,5 @@
 import basic_topology.Operations
+import basic_topology.Continuity
 
 variable {X Y: Type*}
 
@@ -6,7 +7,7 @@ variable {X Y: Type*}
 def product_topology_basis (TX: Family X) (TY: Family Y): Set (Set (X × Y)) :=
   {UV | ∃ U V, U ∈ TX ∧ V ∈ TY ∧ UV = Set.prod U V}
 
-def product_topology (TX: Family X) (TY: Family Y): Set (Set (X × Y)) :=
+def product_topology (TX: Family X) (TY: Family Y): Family (X × Y) :=
   unions (product_topology_basis TX TY)
 
 theorem product_topology_is_topology {TX: Family X} {TY: Family Y} (hTX: IsTopology TX) (hTY: IsTopology TY): IsTopology (product_topology TX TY) := by
@@ -50,9 +51,14 @@ theorem product_topology_product_open {TX: Family X} {TY: Family Y}
 
 -- Projections are open
 
+def proj₁ {X: Type u} {Y: Type v}: X × Y → X :=
+  fun p => p.1
+
+def pr₁ (p : X × Y) : X := p.1
+
 theorem product_topology_left_projection_open {TX: Family X} {TY: Family Y} (hTX: IsTopology TX) (hTY: IsTopology TY)
   {U: Set (X × Y)} (hU: U ∈ product_topology TX TY) :
-  (fun x => x.1) '' U ∈ TX :=
+  proj₁ '' U ∈ TX :=
   sorry
 
 theorem product_topology_right_projection_open {TX: Family X} {TY: Family Y} (hTX: IsTopology TX) (hTY: IsTopology TY)
@@ -99,3 +105,13 @@ theorem boxes_subset_everywhere {TX: Family X} {TY: Family Y} (U: Set (X×Y))(hT
     rw [interior_iff_basis_element boxes_base_product_topology] at hx
     exact hx
   · exact product_topology_is_topology hTX hTY
+
+
+
+theorem continuous_pr₁ (TX: Family X) (TY: Family Y)(hTx: IsTopology TX)(hTY: IsTopology TY) : Continuous (product_topology TX TY) (TX) (proj₁) := by
+  unfold Continuous
+  intro V hV
+  simp[Open]
+  have hpr: proj₁⁻¹'V= V.prod (@Set.univ Y) := by
+    sorry
+  sorry

@@ -37,7 +37,7 @@ theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (h
   rw[interior_iff_basis_element (base_self T)]
   constructor
   intro hx
-  rw[hausdorff_iff_open_separable,] at hT2
+  rw[hausdorff_iff_open_separable] at hT2
   simp[OpenSeparable] at hT2
   rw [Set.mem_compl_iff] at hx
   have h_ne : ∀ y ∈ K, x ≠ y := by
@@ -151,3 +151,8 @@ theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (h
   apply hB.2.2
   exact hB.2.1
   exact hT1
+
+-- theorem compact_iff_every_net_has_convergent_subnet--
+-- theorem in a metric space compact is equivalent to sequentially compact--
+--Theorem: If X is compact and all convergent subsequences converge to L then the sequence converges to L --
+theorem convergent_subsequences_convergent_sequence [DistanceSpace D](d: X→ X → D)(hd: IsMetric d){K: Set X}(hM: metric_open d)( y :Nat → Nat):

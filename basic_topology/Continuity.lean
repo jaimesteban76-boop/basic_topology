@@ -11,7 +11,7 @@ set_option linter.style.multiGoal false
 
 variable {X Y Z: Type*} {T₁: Family X} {T₂: Family Y} {T₃: Family Z}
 
-def Continuous (T₁: Family X) (T₂: Family Y) (f: X → Y): Prop :=
+def Continuous {A B: Type*} (T₁: Family A) (T₂: Family B) (f: A → B): Prop :=
   ∀ V, Open T₂ V → Open T₁ (f ⁻¹' V)
 
 -- The identity function is continuous
