@@ -76,6 +76,7 @@ theorem product_topology_product_open {TX: Family X} {TY: Family Y}
   Set.prod U V ∈ product_topology TX TY := by
   apply unions_mem
   exists U, V
+--boxes product topology--
 theorem boxes_base_product_topology {TX: Family X} {TY: Family Y}: base (product_topology TX TY) (product_topology_basis TX TY) := by
   rw [base_iff_unions]
   constructor
@@ -90,8 +91,7 @@ theorem boxes_subset_everywhere {TX: Family X} {TY: Family Y} (U: Set (X×Y))(hT
     exact hx
   · exact product_topology_is_topology hTX hTY
 
--- Projections Definitions
-
+-- Projections Definitions--
 def proj₁ {X: Type u} {Y: Type v}: X × Y → X :=
   fun p => p.1
 def proj₂ {X: Type u} {Y: Type v}: X × Y → Y :=
@@ -137,7 +137,7 @@ theorem continuous_pr₂ (TX: Family X) (TY: Family Y)(hTX: IsTopology TX) : Con
   exact hV
 
 
---Projections are open maps
+--Projections are open maps--
 theorem product_topology_left_projection_open {TX: Family X} {TY: Family Y} (hTX: IsTopology TX) (hTY: IsTopology TY): Open_map (product_topology TX TY) TX (proj₁)  := by
   rw [Open_map_iff_basis (product_topology_basis TX TY)]
   intro V hV

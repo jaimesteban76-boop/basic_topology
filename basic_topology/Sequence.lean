@@ -1,6 +1,6 @@
 import basic_topology.Separation
 import basic_topology.MetricTopology
-
+import basic_topology.Net
 
 variable {X Y D: Type*}
 
@@ -133,3 +133,7 @@ theorem hausdorff_limit_unique_sequences (T: Family X) (h: hausdorff T) (x: Nat 
 -- the set of adherent values are closed
 
 -- defn of countable/denumerable set
+
+--Sequences are nets--
+theorem sequence_converges_iff_net_converges (T: Family X) (s : Nat → X) (L : X) : converges T s L ↔ net_converges T (· ≤ ·) s L := by
+sorry

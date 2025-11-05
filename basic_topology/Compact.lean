@@ -153,6 +153,11 @@ theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (h
   exact hT1
 
 -- theorem compact_iff_every_net_has_convergent_subnet--
+theorem compact_iff_net_adherent (T: Family X) : compact T  ↔ (∀ (Δ : Type u_1) (R : Endorelation Δ) (hR : directed R) (x : Δ → X), ∃ (a : X) , Net.adherent T R x a ) := by
+sorry
 -- theorem in a metric space compact is equivalent to sequentially compact--
+theorem compact_iff_every_sequence_has_adherent_value [DistanceSpace D] {d : X → X → D} (hd : IsMetric d) (T : Family X) (hT_metric : T = metric_open d) : compact T ↔ ∀ (s : Nat → X), ∃ (a : X), adherent_value T s a := by
+sorry
 --Theorem: If X is compact and all convergent subsequences converge to L then the sequence converges to L --
-theorem convergent_subsequences_convergent_sequence [DistanceSpace D](d: X→ X → D)(hd: IsMetric d){K: Set X}(hM: metric_open d)( y :Nat → Nat):
+theorem all_convergent_subsequences_imply_convergence [DistanceSpace D] {d : X → X → D} (hd : IsMetric d)(T : Family X) (hT_metric : T = metric_open d) (hT_compact : compact T) (s : Nat → X) (L : X) (h_subsequences : ∀ (k : Nat → Nat) (hk : increasing_seq k) (a : X), converges T ( s ∘ k) a → a = L) : converges T s L := by
+sorry

@@ -32,7 +32,12 @@ def net_converges {X: Type u} {Δ: Type v} (T: Family X) (R: Relation Δ Δ) (a:
 def neighborhood_direction (T: Family X) (x: X): Endorelation (Nbhds T x) :=
   fun N₁ N₂ => N₂.val ⊆ N₁.val
 
---dfn a sequence is a net --
+--sequence is a net --
+theorem nat_le_is_directed : directed (· ≤ · : Nat → Nat → Prop) := {
+  reflexive := fun a => le_refl a,
+  transitive := fun _ _ _ hab hbc => le_trans hab hbc,
+  upperbounded := fun x₁ x₂ => ⟨max x₁ x₂, ⟨le_max_left x₁ x₂, le_max_right x₁ x₂⟩⟩}
+
 
 theorem neighborhood_direction_directed_set (T: Family X) (x: X) (hT: IsTopology T): directed (neighborhood_direction T x) := by
   repeat constructor
